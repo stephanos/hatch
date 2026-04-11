@@ -1,0 +1,59 @@
+[tools]
+xcodes = "latest"
+xcodegen = "latest"
+
+[tasks.build]
+run = "swift build"
+description = "Build hatch with SwiftPM"
+
+[tasks.fmt]
+run = "swift format format --in-place --recursive Package.swift Sources"
+description = "Format Swift sources with swift-format"
+
+[tasks.check]
+run = "swift format lint --recursive --strict Package.swift Sources && swift build -Xswiftc -warnings-as-errors"
+description = "Lint Swift formatting and build hatch"
+
+[tasks.test]
+run = "swift run hatch-tests"
+description = "Run the hatch regression test suite"
+
+[tasks.bundle]
+run = "bash scripts/build_app_bundle.sh"
+description = "Build dist/Hatch.app"
+
+[tasks.release-bundle]
+run = "bash scripts/package_release.sh"
+description = "Build and zip a tag-versioned Hatch release bundle"
+
+[tasks.run]
+run = "swift run hatch"
+description = "Launch hatch directly from SwiftPM"
+
+[tasks.open]
+run = "bash scripts/build_app_bundle.sh && open dist/Hatch.app"
+description = "Build and open Hatch.app"
+
+[tasks.install]
+run = "bash scripts/install_app_local.sh"
+description = "Build Hatch.app, install it into /Applications, and launch it"
+
+[tasks.xcode-install]
+run = "mise exec -- xcodes install --latest --select"
+description = "Install the latest Apple Xcode via xcodes and select it"
+
+[tasks.xcode-setup]
+run = "sudo xcodebuild -runFirstLaunch && mise run xcode-project"
+description = "Install Xcode system components and generate hatch.xcodeproj"
+
+[tasks.xcode-project]
+run = "mise exec -- xcodegen generate"
+description = "Generate hatch.xcodeproj from project.yml"
+
+[tasks.xcode-ui-test]
+run = "mise run xcode-project && bash scripts/run_xcode_ui_tests.sh"
+description = "Run the macOS XCUITest suite"
+
+[tasks.xcode-ui-visual-test]
+run = "mise run xcode-project && bash scripts/run_xcode_ui_tests.sh -only-testing:HatchUITests/HatchUIVisualTests"
+description = "Run the macOS XCUITest visual baseline suite"

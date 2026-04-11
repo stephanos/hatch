@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v4
+
+      - name: Set Up mise
+        uses: jdx/mise-action@v2
+
+      - name: Format
+        run: mise run fmt
+
+      - name: Verify Formatting Is Clean
+        run: git diff --exit-code
+
+      - name: Lint And Build
+        run: mise run check
+
+      - name: Run Tests
+        run: mise run test
+
+      - name: Generate Xcode Project
+        run: mise run xcode-project
+
+      - name: Verify Xcode Project Is Clean
+        run: git diff --exit-code
+
+      - name: Run macOS UI Tests
+        run: mise run xcode-ui-test

@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Up mise
+        uses: jdx/mise-action@v2
+
+      - name: Validate
+        run: |
+          mise run check
+          mise run test
+
+      - name: Package Release Bundle
+        run: bash scripts/package_release.sh
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/hatch-*.zip
+          generate_release_notes: true

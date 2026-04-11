@@ -1,0 +1,85 @@
+name: hatch
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    macOS: "15.0"
+packages:
+  TOMLDecoder:
+    url: https://github.com/dduan/TOMLDecoder.git
+    from: 0.4.4
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MACOSX_DEPLOYMENT_TARGET: 15.0
+    OTHER_SWIFT_FLAGS:
+      - "-package-name"
+      - "hatch"
+targets:
+  HatchSupport:
+    type: library.static
+    platform: macOS
+    sources:
+      - Sources/HatchSupport
+  HatchCore:
+    type: library.static
+    platform: macOS
+    sources:
+      - Sources/HatchCore
+    dependencies:
+      - target: HatchSupport
+      - package: TOMLDecoder
+  HatchAppState:
+    type: library.static
+    platform: macOS
+    sources:
+      - Sources/HatchApp/State
+    dependencies:
+      - target: HatchSupport
+      - target: HatchCore
+  hatch:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/HatchApp
+        excludes:
+          - State
+    resources:
+      - Sources/HatchApp/Resources
+    dependencies:
+      - package: TOMLDecoder
+      - target: HatchSupport
+      - target: HatchCore
+      - target: HatchAppState
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.stephanos.hatch
+        PRODUCT_NAME: Hatch
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleDisplayName: Hatch
+        INFOPLIST_KEY_LSMinimumSystemVersion: "15.0"
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_NSHighResolutionCapable: YES
+        INFOPLIST_KEY_NSSupportsAutomaticGraphicsSwitching: YES
+  HatchUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - Tests/HatchUITests
+    dependencies:
+      - target: HatchSupport
+      - target: hatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.stephanos.hatch.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: hatch
+schemes:
+  hatch:
+    build:
+      targets:
+        hatch: all
+        HatchUITests: [test]
+    test:
+      targets:
+        - HatchUITests
