@@ -45,7 +45,9 @@ hatch task open my-task
 hatch task open https://github.com/acme/web/pull/123
 ```
 
-This fuzzy matches tasks across all projects, or resolves GitHub PR URLs.
+This fuzzy matches tasks across all projects, or resolves GitHub PR URLs. 
+
+_Tip: Add [tab completion](#tab-completion) to your shell and customize which [editor](#editor) to open._
 
 **5. Clone a repo**
 
