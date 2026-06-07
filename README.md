@@ -14,15 +14,11 @@ It creates disposable, task-scoped workspaces with isolated repo checkouts and a
 curl -fsSL https://raw.githubusercontent.com/stephanos/hatch/main/install.sh | sh
 ```
 
-On macOS, if Gatekeeper reports that the downloaded binary is quarantined, run:
-
-```sh
-xattr -dr com.apple.quarantine "$HOME/.local/bin/hatch"
-```
+Or download the [latest release](https://github.com/stephanos/hatch/releases/latest) manually and copy the `hatch` binary to your `$PATH`.
 
 **2. Init**
 
-Pass the folder where you want your projects to live. Use `.` for the current directory.
+Pass the folder where you want your projects to live.
 
 ```sh
 hatch workspace new ~/Workspace
