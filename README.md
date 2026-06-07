@@ -129,7 +129,7 @@ alias start-agent='hatch agent start'
 
 ### Ignore AI agent files
 
-Add this to your `~/.gitignore_global`:
+Hatch generates AI agent files inside each repo to automatically include project and workspace prompts. Add this to your `~/.gitignore_global`:
 
 ```gitignore
 CLAUDE.local.md
