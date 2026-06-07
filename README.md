@@ -68,7 +68,9 @@ hatch agent start codex
 hatch agent start claude -- --model opus
 ```
 
-Customize `.hatch/hooks/agent_start.sh` to change how agents are launched or which sandbox capabilities they receive.
+Agents start inside a sandbox by default with read/write access to the current scope; and applying agent-specific profiles.
+
+See [#Agent sandboxing](#agent_sandboxing) for details.
 
 **7. Cleanup tasks**
 
@@ -122,6 +124,7 @@ alias new-project='hatch project new'
 alias new-task='hatch task new'
 alias new-repo='hatch repo new'
 alias open-task='hatch task open'
+alias start-agent='hatch agent start'
 ```
 
 ### Ignore AI agent files
@@ -132,6 +135,12 @@ Add this to your `~/.gitignore_global`:
 CLAUDE.local.md
 AGENTS.override.md
 ```
+
+### Agent sandboxing
+
+The default `agent_start.sh` hook launches agents through Hatch's sandbox through [nono](https://github.com/always-further/nono).
+
+Editing `.hatch/hooks/agent_start.sh` can change or bypass this behavior.
 
 ### Hooks
 
