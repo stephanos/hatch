@@ -18,12 +18,13 @@ printf '@AGENTS.md\n' > "$task_path/CLAUDE.md"
 # Disable pathname expansion while parsing default-repos.txt.
 set -f
 
-# Check whether a default repo file has entries.
-hatch_default_repos_has_entries() {
+# Check out repos listed in a default-repos.txt file.
+hatch_checkout_default_repos() {
   file="$1"
   if [ ! -f "$file" ]; then
     return 1
   fi
+  did_checkout=0
   while IFS= read -r line || [ -n "$line" ]; do
     set -- $line
     case "${1:-}" in
@@ -31,26 +32,7 @@ hatch_default_repos_has_entries() {
         continue
         ;;
       *)
-        return 0
-        ;;
-    esac
-  done < "$file"
-  return 1
-}
-
-# Select project defaults when present; otherwise use workspace defaults.
-default_repos="$workspace_default_repos"
-if hatch_default_repos_has_entries "$project_default_repos"; then
-  default_repos="$project_default_repos"
-fi
-
-# Check out default repos.
-if hatch_default_repos_has_entries "$default_repos"; then
-  while IFS= read -r line || [ -n "$line" ]; do
-    set -- $line
-    case "${1:-}" in
-      ""|\#*)
-        continue
+        did_checkout=1
         ;;
     esac
     repo="$1"
@@ -65,5 +47,9 @@ if hatch_default_repos_has_entries "$default_repos"; then
     else
       hatch repo new "$repo" --task-path "$task_path"
     fi
-  done < "$default_repos"
-fi
+  done < "$file"
+  [ "$did_checkout" -eq 1 ]
+}
+
+# Check out project defaults when present; otherwise use workspace defaults.
+hatch_checkout_default_repos "$project_default_repos" || hatch_checkout_default_repos "$workspace_default_repos"
