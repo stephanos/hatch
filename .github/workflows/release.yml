@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: hatch-linux-x86_64
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact: hatch-linux-arm64
+            needs_cross: true
+          - runner: macos-14
+            target: aarch64-apple-darwin
+            artifact: hatch-darwin-arm64
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Up mise
+        uses: jdx/mise-action@v2
+
+      - name: Install Tools
+        run: mise install
+
+      - name: Validate
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          mise run check
+          mise run test
+
+      - name: Validate Release Tag
+        run: |
+          tag_name="${GITHUB_REF_NAME}"
+          if [[ ! "${tag_name}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "release tag must be a v-prefixed version tag, for example: v0.5 or v0.5.0" >&2
+            exit 1
+          fi
+
+      - name: Prepare cross toolchain
+        if: matrix.needs_cross == true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Build Release Binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && 'aarch64-linux-gnu-gcc' || '' }}
+        run: |
+          rustup target add ${{ matrix.target }}
+          VERSION="${GITHUB_REF_NAME#v}"
+          HATCH_VERSION="${VERSION}" cargo build --release --target "${{ matrix.target }}" --bin hatch
+          mkdir -p dist
+          if [[ "${{ matrix.target }}" == *-apple-darwin ]]; then
+            dmg_staging_dir="$(mktemp -d)"
+            cp "target/${{ matrix.target }}/release/hatch" "${dmg_staging_dir}/hatch"
+            hdiutil create \
+              -volname "hatch" \
+              -srcfolder "${dmg_staging_dir}" \
+              -ov \
+              -format UDZO \
+              "dist/${{ matrix.artifact }}.dmg"
+          else
+            cp "target/${{ matrix.target }}/release/hatch" dist/${{ matrix.artifact }}
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: hatch-*
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
+          generate_release_notes: true

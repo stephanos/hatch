@@ -1,0 +1,12 @@
+```console
+$ NO_COLOR=1 hatch project new
+? 2
+error: the following required arguments were not provided:
+  <NAME>
+
+Usage: hatch project new <NAME>
+
+For more information, try '--help'.
+
+
+```

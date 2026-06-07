@@ -1,0 +1,5 @@
+# Add default task repos here, one repo per line:
+# owner/repo [base-branch]
+#
+# Example:
+# acme/web main

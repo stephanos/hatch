@@ -1,0 +1,31 @@
+[tools]
+rust = { version = "1.95.0", components = "rustfmt,clippy" }
+
+[tasks.build]
+run = "mise exec -- cargo build"
+description = "Build the hatch CLI"
+
+[tasks.fmt]
+run = "mise exec -- cargo fmt"
+description = "Format Rust sources"
+
+[tasks.check]
+run = "mise exec -- cargo fmt --check && RUSTFLAGS=\"-D warnings\" mise exec -- cargo check && mise exec -- cargo clippy --all-targets -- -D warnings"
+description = "Check Rust formatting and lints"
+
+[tasks.test]
+run = "mise exec -- cargo test"
+description = "Run Rust tests"
+
+[tasks.run]
+run = "mise exec -- cargo run --"
+description = "Run the hatch CLI"
+
+[tasks.sandbox]
+depends = ["install"]
+run = "mise exec -- ./scripts/sandbox.sh"
+description = "Start an isolated local sandbox in .sandbox"
+
+[tasks.install]
+run = "mise exec -- ./scripts/install.sh"
+description = "Build and install the hatch CLI to ~/.local/bin/hatch"
