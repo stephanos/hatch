@@ -149,7 +149,7 @@ Hooks define the behavior of the corresponding CLI commands. Change them if you 
 Hooks are shell scripts that live in `.hatch/hooks` in the workspace/project folder.
 Any hooks defined in the project folder override hooks in the workspace folder.
 A non-zero hook exit code stops the parent command.
-Hatch also writes `<hook>.default.sh` copies in the workspace hooks directory. These files contain Hatch's current bundled defaults and are refreshed by workspace-aware commands. Edit `<hook>.sh` to customize behavior; Hatch upgrades it only while it still matches the previous bundled default.
+Hatch also writes `<hook>.default` copies in the workspace hooks directory. These files contain Hatch's current bundled defaults and are refreshed by workspace-aware commands. Edit `<hook>.sh` to customize behavior; Hatch upgrades it only while it still matches the previous bundled default.
 
 Available hook files:
 

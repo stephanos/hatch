@@ -299,7 +299,7 @@ mod tests {
             .ensure_workspace_hooks(&hooks_directory)
             .unwrap_or_else(|error| panic!("failed to scaffold workspace hooks: {error}"));
 
-        let default_hook = hooks_directory.join("task_open.default.sh");
+        let default_hook = hooks_directory.join("task_open.default");
         let data = fs_err::read_to_string(&default_hook)
             .unwrap_or_else(|error| panic!("failed to read {default_hook}: {error}"));
         assert!(data.starts_with("# This is Hatch's bundled default hook for task_open.\n"));
@@ -330,6 +330,34 @@ mod tests {
     }
 
     #[test]
+    fn hook_installer_migrates_legacy_workspace_default_hook_copy() {
+        let root = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
+        let root = utf8_path(root.path());
+        let hooks_directory = root.join("hooks");
+        fs_err::create_dir_all(&hooks_directory)
+            .unwrap_or_else(|error| panic!("failed to create {hooks_directory}: {error}"));
+        let old_default = "# This is Hatch's bundled default hook for task_open.\n# Hatch rewrites this file when its bundled defaults change.\n# Edit task_open.sh to customize behavior; Hatch only upgrades it while it still matches a previous default.\n\n#!/usr/bin/env sh\nprintf 'old default\\n'\n";
+        let legacy_default = hooks_directory.join("task_open.default.sh");
+        fs_err::write(&legacy_default, old_default)
+            .unwrap_or_else(|error| panic!("failed to write legacy default hook: {error}"));
+        fs_err::write(
+            hooks_directory.join("task_open.sh"),
+            "#!/usr/bin/env sh\nprintf 'old default\\n'\n",
+        )
+        .unwrap_or_else(|error| panic!("failed to write old user hook: {error}"));
+
+        super::hooks::HookInstaller::new()
+            .ensure_workspace_hooks(&hooks_directory)
+            .unwrap_or_else(|error| panic!("failed to scaffold workspace hooks: {error}"));
+
+        let hook = fs_err::read_to_string(hooks_directory.join("task_open.sh"))
+            .unwrap_or_else(|error| panic!("failed to read upgraded hook: {error}"));
+        assert_eq!(hook, include_str!("../templates/hooks/task_open.sh"));
+        assert!(hooks_directory.join("task_open.default").exists());
+        assert!(!legacy_default.exists());
+    }
+
+    #[test]
     fn hook_installer_upgrades_workspace_hook_that_still_matches_previous_default() {
         let root = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
         let root = utf8_path(root.path());
@@ -337,7 +365,7 @@ mod tests {
         fs_err::create_dir_all(&hooks_directory)
             .unwrap_or_else(|error| panic!("failed to create {hooks_directory}: {error}"));
         let old_default = "# This is Hatch's bundled default hook for task_open.\n# Hatch rewrites this file when its bundled defaults change.\n# Edit task_open.sh to customize behavior; Hatch only upgrades it while it still matches a previous default.\n\n#!/usr/bin/env sh\nprintf 'old default\\n'\n";
-        fs_err::write(hooks_directory.join("task_open.default.sh"), old_default)
+        fs_err::write(hooks_directory.join("task_open.default"), old_default)
             .unwrap_or_else(|error| panic!("failed to write old default hook: {error}"));
         fs_err::write(
             hooks_directory.join("task_open.sh"),
@@ -362,7 +390,7 @@ mod tests {
         fs_err::create_dir_all(&hooks_directory)
             .unwrap_or_else(|error| panic!("failed to create {hooks_directory}: {error}"));
         let old_default = "# This is Hatch's bundled default hook for task_open.\n# Hatch rewrites this file when its bundled defaults change.\n# Edit task_open.sh to customize behavior; Hatch only upgrades it while it still matches a previous default.\n\n#!/usr/bin/env sh\nprintf 'old default\\n'\n";
-        fs_err::write(hooks_directory.join("task_open.default.sh"), old_default)
+        fs_err::write(hooks_directory.join("task_open.default"), old_default)
             .unwrap_or_else(|error| panic!("failed to write old default hook: {error}"));
         fs_err::write(
             hooks_directory.join("task_open.sh"),

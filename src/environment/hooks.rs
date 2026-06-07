@@ -47,10 +47,13 @@ impl HookInstaller {
     fn sync_workspace_hook(&self, hooks_directory: &Utf8Path, hook: HookName) -> Result<()> {
         let name = hook.as_str();
         let path = hooks_directory.join(format!("{name}.sh"));
-        let default_path = hooks_directory.join(format!("{name}.default.sh"));
+        let default_path = hooks_directory.join(format!("{name}.default"));
+        let legacy_default_path = hooks_directory.join(format!("{name}.default.sh"));
         let data = hook.default_template();
         let previous_default = if default_path.exists() {
             Some(fs_err::read_to_string(&default_path).at_path(&default_path)?)
+        } else if legacy_default_path.exists() {
+            Some(fs_err::read_to_string(&legacy_default_path).at_path(&legacy_default_path)?)
         } else {
             None
         };
@@ -70,7 +73,11 @@ impl HookInstaller {
         }
         let default_data = workspace_default_hook_data(name, data);
         fs_err::write(&default_path, default_data).at_path(&default_path)?;
-        self.make_executable(&default_path)
+        self.make_executable(&default_path)?;
+        if legacy_default_path.exists() {
+            fs_err::remove_file(&legacy_default_path).at_path(&legacy_default_path)?;
+        }
+        Ok(())
     }
 
     fn write_project_hook(&self, path: &Utf8Path, hook_name: &str) -> Result<()> {

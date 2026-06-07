@@ -42,11 +42,11 @@ fn workspace_root_prints_configured_workspace_root() {
 #[test]
 fn workspace_aware_commands_refresh_default_hook_copies() {
     let env = TestEnv::configured();
-    assert!(!env.path(".hatch/hooks/task_open.default.sh").exists());
+    assert!(!env.path(".hatch/hooks/task_open.default").exists());
 
     env.run_output(&["workspace", "root"], None);
 
-    let data = env.read(".hatch/hooks/task_open.default.sh");
+    let data = env.read(".hatch/hooks/task_open.default");
     assert!(data.starts_with("# This is Hatch's bundled default hook for task_open.\n"));
     assert!(data.ends_with(include_str!("../../templates/hooks/task_open.sh")));
 }
