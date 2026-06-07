@@ -70,7 +70,7 @@ hatch agent start claude -- --model opus
 
 Agents start inside a sandbox by default with read/write access to the current scope; and applying agent-specific profiles.
 
-See [#Agent sandboxing](#agent_sandboxing) for details.
+See [Agent sandboxing](#agent-sandboxing) for details.
 
 **7. Cleanup tasks**
 
