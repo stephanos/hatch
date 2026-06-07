@@ -1,19 +1,24 @@
 #!/usr/bin/env sh
 # See hook docs: https://github.com/stephanos/hatch/blob/main/README.md#hooks
 
+# Load hook helpers.
 . "$HATCH_HOOK_LIB_DIR/hatch.sh"
 
+# Read hook inputs.
 workspace_root="$(hatch_workspace_root)"
 project_path="$(hatch_arg_value --required --project-path "$@")"
 task_path="$(hatch_arg_value --required --task-path "$@")"
 workspace_default_repos="$workspace_root/.hatch/default-repos.txt"
 project_default_repos="$project_path/.hatch/default-repos.txt"
 
+# Write agent instruction forwarding files.
 printf '@../AGENTS.md\n' > "$task_path/AGENTS.md"
 printf '@AGENTS.md\n' > "$task_path/CLAUDE.md"
 
+# Disable pathname expansion while parsing default-repos.txt.
 set -f
 
+# Check whether a default repo file has entries.
 hatch_default_repos_has_entries() {
   file="$1"
   if [ ! -f "$file" ]; then
@@ -33,11 +38,13 @@ hatch_default_repos_has_entries() {
   return 1
 }
 
+# Select project defaults when present; otherwise use workspace defaults.
 default_repos="$workspace_default_repos"
 if hatch_default_repos_has_entries "$project_default_repos"; then
   default_repos="$project_default_repos"
 fi
 
+# Check out default repos.
 if hatch_default_repos_has_entries "$default_repos"; then
   while IFS= read -r line || [ -n "$line" ]; do
     set -- $line

@@ -1,11 +1,15 @@
 #!/usr/bin/env sh
 # See hook docs: https://github.com/stephanos/hatch/blob/main/README.md#hooks
 
+# Load hook helpers.
 . "$HATCH_HOOK_LIB_DIR/hatch.sh"
 
+# Read hook inputs.
 hatch_bin="${HATCH_BIN:-hatch}"
 agent="$(hatch_arg_value --required --agent "$@")"
 scope_path="$(hatch_arg_value --required --scope-path "$@")"
+
+# Keep only forwarded agent arguments.
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --)
@@ -18,6 +22,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+# Document sandbox customization.
 # Available __agent-exec flags:
 #   --profile <ref>       Add a sandbox profile. Repeatable.
 #   --registry <url>      Use a custom profile registry.
@@ -27,6 +32,8 @@ done
 #   --block-net           Block network access.
 #   --allow-port <port>   Allow a localhost port. Repeatable.
 # Args after -- are passed to the agent.
+
+# Launch the requested agent.
 case "$agent" in
   codex)
     exec "$hatch_bin" __agent-exec "$agent" \
