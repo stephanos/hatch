@@ -29,7 +29,7 @@ fn project_new_mutates_workspace() {
     assert_eq!(env.read("api/AGENTS.md"), "@../AGENTS.md\n");
     assert_eq!(env.read("api/CLAUDE.md"), "@AGENTS.md\n");
     assert!(
-        env.read("api/.hatch/default_repos.txt")
+        env.read("api/.hatch/default-repos.txt")
             .contains("owner/repo")
     );
     assert!(env.path("api/.hatch/hooks/project_new.sh").exists());

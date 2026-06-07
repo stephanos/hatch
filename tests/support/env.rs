@@ -47,25 +47,25 @@ impl TestEnv {
 
     pub fn configured() -> Self {
         let env = Self::empty();
-        env.mkdir(".hatch/hooks/lib");
+        env.mkdir(".hatch/lib");
         fs::write(
-            env.workspace.join(".hatch/hooks/lib/hatch.sh"),
-            include_str!("../../templates/hooks/lib/hatch.sh"),
+            env.workspace.join(".hatch/lib/hatch.sh"),
+            include_str!("../../templates/lib/hatch.sh"),
         )
         .unwrap_or_else(|error| panic!("failed to write hatch hook lib: {error}"));
         fs::write(
-            env.workspace.join(".hatch/hooks/lib/args.sh"),
-            include_str!("../../templates/hooks/lib/args.sh"),
+            env.workspace.join(".hatch/lib/args.sh"),
+            include_str!("../../templates/lib/args.sh"),
         )
         .unwrap_or_else(|error| panic!("failed to write args hook lib: {error}"));
         fs::write(
-            env.workspace.join(".hatch/hooks/lib/path.sh"),
-            include_str!("../../templates/hooks/lib/path.sh"),
+            env.workspace.join(".hatch/lib/path.sh"),
+            include_str!("../../templates/lib/path.sh"),
         )
         .unwrap_or_else(|error| panic!("failed to write path hook lib: {error}"));
         fs::write(
-            env.workspace.join(".hatch/hooks/lib/repo.sh"),
-            include_str!("../../templates/hooks/lib/repo.sh"),
+            env.workspace.join(".hatch/lib/repo.sh"),
+            include_str!("../../templates/lib/repo.sh"),
         )
         .unwrap_or_else(|error| panic!("failed to write repo hook lib: {error}"));
         fs::write(
@@ -99,8 +99,8 @@ impl TestEnv {
         )
         .unwrap_or_else(|error| panic!("failed to write agent_start hook: {error}"));
         fs::write(
-            env.workspace.join(".hatch/default_repos.txt"),
-            include_str!("../../templates/default_repos.txt"),
+            env.workspace.join(".hatch/default-repos.txt"),
+            include_str!("../../templates/default-repos.txt"),
         )
         .unwrap_or_else(|error| panic!("failed to write default repos file: {error}"));
         fs::write(

@@ -6,8 +6,8 @@
 workspace_root="$(hatch_workspace_root)"
 project_path="$(hatch_arg_value --required --project-path "$@")"
 task_path="$(hatch_arg_value --required --task-path "$@")"
-workspace_default_repos="$workspace_root/.hatch/default_repos.txt"
-project_default_repos="$project_path/.hatch/default_repos.txt"
+workspace_default_repos="$workspace_root/.hatch/default-repos.txt"
+project_default_repos="$project_path/.hatch/default-repos.txt"
 
 printf '@../AGENTS.md\n' > "$task_path/AGENTS.md"
 printf '@AGENTS.md\n' > "$task_path/CLAUDE.md"

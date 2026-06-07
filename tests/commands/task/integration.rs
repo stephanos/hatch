@@ -142,7 +142,7 @@ fn task_new_default_repos_checks_out_local_git_repo_without_network() {
     let workspace = env.workspace.display().to_string();
     env.run_output(&["workspace", "new", &workspace], None);
     env.write(
-        ".hatch/default_repos.txt",
+        ".hatch/default-repos.txt",
         format!("file://{} main\n", remote.display()),
     );
 

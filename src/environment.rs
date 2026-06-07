@@ -192,7 +192,7 @@ fn config_file_path() -> Result<Utf8PathBuf> {
 fn discover_workspace_root(start: &camino::Utf8Path) -> Option<Utf8PathBuf> {
     start
         .ancestors()
-        .find(|path| path.join(".hatch/hooks/lib/hatch.sh").is_file())
+        .find(|path| path.join(".hatch/lib/hatch.sh").is_file())
         .map(camino::Utf8Path::to_path_buf)
 }
 
@@ -253,9 +253,9 @@ mod tests {
         let root = utf8_path(root.path());
         let workspace_root = root.join("Workspace");
         let task_path = workspace_root.join("api/setup-ci");
-        fs_err::create_dir_all(workspace_root.join(".hatch/hooks/lib"))
-            .unwrap_or_else(|error| panic!("failed to create workspace hooks lib: {error}"));
-        fs_err::write(workspace_root.join(".hatch/hooks/lib/hatch.sh"), "")
+        fs_err::create_dir_all(workspace_root.join(".hatch/lib"))
+            .unwrap_or_else(|error| panic!("failed to create workspace hatch lib: {error}"));
+        fs_err::write(workspace_root.join(".hatch/lib/hatch.sh"), "")
             .unwrap_or_else(|error| panic!("failed to write hatch.sh: {error}"));
         fs_err::create_dir_all(workspace_root.join("api/.hatch/hooks"))
             .unwrap_or_else(|error| panic!("failed to create project hatch dir: {error}"));
@@ -311,7 +311,7 @@ mod tests {
         let root = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
         let root = utf8_path(root.path());
         let hooks_directory = root.join("hooks");
-        let lib_directory = hooks_directory.join("lib");
+        let lib_directory = root.join("lib");
         fs_err::create_dir_all(&lib_directory)
             .unwrap_or_else(|error| panic!("failed to create {lib_directory}: {error}"));
         let repo_lib = lib_directory.join("repo.sh");
@@ -324,7 +324,7 @@ mod tests {
 
         let data = fs_err::read_to_string(&repo_lib)
             .unwrap_or_else(|error| panic!("failed to read {repo_lib}: {error}"));
-        assert_eq!(data, include_str!("../templates/hooks/lib/repo.sh"));
+        assert_eq!(data, include_str!("../templates/lib/repo.sh"));
     }
 
     #[test]

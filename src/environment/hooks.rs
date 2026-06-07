@@ -84,16 +84,16 @@ impl HookInstaller {
     }
 
     fn write_hook_lib_files(&self, hooks_directory: &Utf8Path) -> Result<()> {
-        let lib_directory = hooks_directory.join("lib");
+        let Some(hatch_directory) = hooks_directory.parent() else {
+            return Ok(());
+        };
+        let lib_directory = hatch_directory.join("lib");
         fs_err::create_dir_all(&lib_directory).at_path(&lib_directory)?;
         for (filename, data) in [
-            (
-                "hatch.sh",
-                include_str!("../../templates/hooks/lib/hatch.sh"),
-            ),
-            ("args.sh", include_str!("../../templates/hooks/lib/args.sh")),
-            ("path.sh", include_str!("../../templates/hooks/lib/path.sh")),
-            ("repo.sh", include_str!("../../templates/hooks/lib/repo.sh")),
+            ("hatch.sh", include_str!("../../templates/lib/hatch.sh")),
+            ("args.sh", include_str!("../../templates/lib/args.sh")),
+            ("path.sh", include_str!("../../templates/lib/path.sh")),
+            ("repo.sh", include_str!("../../templates/lib/repo.sh")),
         ] {
             self.write_hook_lib_file(&lib_directory.join(filename), data)?;
         }
@@ -109,11 +109,11 @@ impl HookInstaller {
         let Some(hatch_directory) = hooks_directory.parent() else {
             return Ok(());
         };
-        let path = hatch_directory.join("default_repos.txt");
+        let path = hatch_directory.join("default-repos.txt");
         if path.exists() {
             return Ok(());
         }
-        fs_err::write(&path, include_str!("../../templates/default_repos.txt")).at_path(&path)
+        fs_err::write(&path, include_str!("../../templates/default-repos.txt")).at_path(&path)
     }
 
     fn make_executable(&self, path: &Utf8Path) -> Result<()> {

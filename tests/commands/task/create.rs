@@ -68,7 +68,7 @@ fn task_new_checks_out_default_repos() {
     env.install_gh(FakeGh::Login);
     env.mkdir("p1/.hatch");
     env.write(
-        ".hatch/default_repos.txt",
+        ".hatch/default-repos.txt",
         "acme/web main\n# skipped/comment\n",
     );
 
@@ -105,8 +105,8 @@ fn task_new_uses_project_default_repos_when_non_empty() {
     env.install_git(FakeGit::Clone);
     env.install_gh(FakeGh::Login);
     env.mkdir("p1/.hatch");
-    env.write(".hatch/default_repos.txt", "acme/workspace main\n");
-    env.write("p1/.hatch/default_repos.txt", "acme/project main\n");
+    env.write(".hatch/default-repos.txt", "acme/workspace main\n");
+    env.write("p1/.hatch/default-repos.txt", "acme/project main\n");
 
     let output = env.run_output(&["task", "new", "p1", "t-project"], None);
 
@@ -125,9 +125,9 @@ fn task_new_uses_workspace_default_repos_when_project_file_has_no_entries() {
     env.install_git(FakeGit::Clone);
     env.install_gh(FakeGh::Login);
     env.mkdir("p1/.hatch");
-    env.write(".hatch/default_repos.txt", "acme/workspace main\n");
+    env.write(".hatch/default-repos.txt", "acme/workspace main\n");
     env.write(
-        "p1/.hatch/default_repos.txt",
+        "p1/.hatch/default-repos.txt",
         "# project defaults are intentionally empty\n",
     );
 

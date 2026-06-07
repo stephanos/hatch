@@ -17,7 +17,7 @@ fn workspace_new_creates_workspace_and_agents_file() {
         "Initialized workspace"
     );
     assert_eq!(env.read("AGENTS.md"), "## Workspace Instructions\n");
-    assert!(env.read(".hatch/default_repos.txt").contains("owner/repo"));
+    assert!(env.read(".hatch/default-repos.txt").contains("owner/repo"));
     assert!(env.path(".hatch/hooks/task_new.sh").exists());
     let config = fs::read_to_string(env.config_file())
         .unwrap_or_else(|error| panic!("failed to read hatch config: {error}"));
@@ -153,7 +153,7 @@ fn workspace_hook_uses_configured_workspace_root_from_project_directory() {
         "api/.hatch/hooks/project_new.sh",
         "#!/usr/bin/env sh\nprintf 'project wrapper should not run\\n'\nexit 1\n",
     );
-    env.write("api/.hatch/hooks/lib/hatch.sh", "");
+    env.write("api/.hatch/lib/hatch.sh", "");
 
     let output = env.run_output_discovering_workspace_in_dir(
         &["hook", "workspace", "project_new"],

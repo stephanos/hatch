@@ -172,9 +172,14 @@ impl HookRunner {
         arguments.push(hook_file.to_string());
         arguments.extend(context.flag_arguments());
         let mut environment = BTreeMap::new();
+        let hook_lib_directory = context
+            .workspace_hooks_directory
+            .parent()
+            .map(|path| path.join("lib"))
+            .unwrap_or_else(|| context.workspace_hooks_directory.join("lib"));
         environment.insert(
             "HATCH_HOOK_LIB_DIR".to_string(),
-            context.workspace_hooks_directory.join("lib").to_string(),
+            hook_lib_directory.to_string(),
         );
         environment.insert(
             crate::terminal::HOOK_STATUS_COLOR_ENV.to_string(),
