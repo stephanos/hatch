@@ -1,5 +1,7 @@
 # hatch
 
+[![release](https://img.shields.io/github/v/release/stephanos/hatch)](https://github.com/stephanos/hatch/releases/latest)
+
 `hatch` is a CLI for task-oriented git workspace management, built for AI-assisted development.
 
 It creates disposable, task-scoped workspaces with isolated repo checkouts and agent context.
