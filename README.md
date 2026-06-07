@@ -84,6 +84,22 @@ Once submitted, it removes the selected tasks' files locally and deletes their r
 
 ## Recommended Customizations
 
+### Editor
+
+`hatch task open` uses `VISUAL`, then `EDITOR`, then your platform opener (`open` on macOS, `xdg-open` on Linux).
+
+Add your preferred editor to your shell config:
+
+```sh
+export VISUAL='code -n'
+# or
+export VISUAL='cursor -n'
+# or
+export EDITOR='vim'
+```
+
+For more advanced changes, edit `.hatch/hooks/task_open.sh` in your workspace.
+
 ### Tab completion
 
 ```sh
