@@ -55,3 +55,50 @@ hatch_checkout_branch() {
   git -C "$repo_path" config "branch.$branch.remote" origin || return 1
   git -C "$repo_path" config "branch.$branch.merge" "refs/heads/$branch" || return 1
 }
+
+hatch_each_default_repo() {
+  file="$1"
+  callback="$2"
+  if [ ! -f "$file" ]; then
+    return 1
+  fi
+
+  # Disable pathname expansion while parsing default-repos.txt.
+  case "$-" in
+    *f*)
+      restore_glob=0
+      ;;
+    *)
+      restore_glob=1
+      set -f
+      ;;
+  esac
+
+  did_read=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    set -- $line
+    case "${1:-}" in
+      ""|\#*)
+        continue
+        ;;
+    esac
+    repo="$1"
+    base_branch="${2:-}"
+    case "$base_branch" in
+      \#*)
+        base_branch=""
+        ;;
+    esac
+    did_read=1
+    if ! "$callback" "$repo" "$base_branch"; then
+      if [ "$restore_glob" -eq 1 ]; then
+        set +f
+      fi
+      return 2
+    fi
+  done < "$file"
+  if [ "$restore_glob" -eq 1 ]; then
+    set +f
+  fi
+  [ "$did_read" -eq 1 ]
+}
