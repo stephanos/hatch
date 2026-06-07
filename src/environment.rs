@@ -312,6 +312,8 @@ mod tests {
         let root = utf8_path(root.path());
         let hooks_directory = root.join("hooks");
         let lib_directory = root.join("lib");
+        fs_err::create_dir_all(&hooks_directory)
+            .unwrap_or_else(|error| panic!("failed to create {hooks_directory}: {error}"));
         fs_err::create_dir_all(&lib_directory)
             .unwrap_or_else(|error| panic!("failed to create {lib_directory}: {error}"));
         let repo_lib = lib_directory.join("repo.sh");

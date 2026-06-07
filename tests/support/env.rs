@@ -48,6 +48,7 @@ impl TestEnv {
     pub fn configured() -> Self {
         let env = Self::empty();
         env.mkdir(".hatch/lib");
+        env.mkdir(".hatch/hooks");
         fs::write(
             env.workspace.join(".hatch/lib/hatch.sh"),
             include_str!("../../templates/lib/hatch.sh"),
