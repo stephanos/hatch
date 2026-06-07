@@ -56,9 +56,8 @@ hatch_checkout_branch() {
   git -C "$repo_path" config "branch.$branch.merge" "refs/heads/$branch" || return 1
 }
 
-hatch_each_default_repo() {
+hatch_default_repo_entries() {
   file="$1"
-  callback="$2"
   if [ ! -f "$file" ]; then
     return 1
   fi
@@ -90,15 +89,26 @@ hatch_each_default_repo() {
         ;;
     esac
     did_read=1
-    if ! "$callback" "$repo" "$base_branch"; then
-      if [ "$restore_glob" -eq 1 ]; then
-        set +f
-      fi
-      return 2
-    fi
+    printf '%s\t%s\n' "$repo" "$base_branch"
   done < "$file"
   if [ "$restore_glob" -eq 1 ]; then
     set +f
   fi
   [ "$did_read" -eq 1 ]
+}
+
+hatch_default_repos_has_entries() {
+  hatch_default_repo_entries "$1" >/dev/null
+}
+
+hatch_default_repos_file() {
+  project_default_repos="$1"
+  workspace_default_repos="$2"
+  if hatch_default_repos_has_entries "$project_default_repos"; then
+    printf '%s\n' "$project_default_repos"
+  elif hatch_default_repos_has_entries "$workspace_default_repos"; then
+    printf '%s\n' "$workspace_default_repos"
+  else
+    return 1
+  fi
 }

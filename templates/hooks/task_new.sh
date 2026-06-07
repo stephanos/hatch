@@ -16,7 +16,7 @@ printf '@../AGENTS.md\n' > "$task_path/AGENTS.md"
 printf '@AGENTS.md\n' > "$task_path/CLAUDE.md"
 
 # Check out one default repo.
-hatch_checkout_default_repo() {
+checkout_default_repo() {
   repo="$1"
   base_branch="$2"
   if [ -n "$base_branch" ]; then
@@ -27,12 +27,8 @@ hatch_checkout_default_repo() {
 }
 
 # Check out project defaults when present; otherwise use workspace defaults.
-hatch_each_default_repo "$project_default_repos" hatch_checkout_default_repo
-default_repos_status=$?
-if [ "$default_repos_status" -eq 1 ]; then
-  hatch_each_default_repo "$workspace_default_repos" hatch_checkout_default_repo
-  default_repos_status=$?
-fi
-if [ "$default_repos_status" -gt 1 ]; then
-  exit "$default_repos_status"
-fi
+default_repos="$(hatch_default_repos_file "$project_default_repos" "$workspace_default_repos")" || exit 0
+tab="$(printf '\t')"
+hatch_default_repo_entries "$default_repos" | while IFS="$tab" read -r repo base_branch; do
+  checkout_default_repo "$repo" "$base_branch" || exit 1
+done
