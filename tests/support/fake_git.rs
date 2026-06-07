@@ -176,7 +176,7 @@ if [ "$1" = "clone" ]; then
   else
     printf '%s\n' "$2" > "$3/.clone_url"
   fi
-  printf '## Repo Instructions\n' > "$3/AGENTS.md"
+  printf 'Repo-specific guidance\n' > "$3/AGENTS.md"
   exit 0
 fi
 printf 'unsupported git invocation: %s\n' "$*" >&2

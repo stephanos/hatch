@@ -265,7 +265,7 @@ fn repo_new_includes_parent_and_repo_agents_in_override_if_repo_agents_exist() {
                 repo_path.join("AGENTS.override.md").display()
             )
         }),
-        "@../AGENTS.md\n@AGENTS.md\n## Repo Instructions\n"
+        "@../AGENTS.md\n@AGENTS.md\n"
     );
     assert_eq!(
         fs::read_to_string(repo_path.join("CLAUDE.local.md")).unwrap_or_else(|error| {

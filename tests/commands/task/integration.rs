@@ -43,7 +43,7 @@ fn end_to_end_hook_project_task_delete_flow() {
     assert_eq!(
         fs_err::read_to_string(repo_path.join("AGENTS.override.md"))
             .unwrap_or_else(|error| panic!("failed to read AGENTS.override.md: {error}")),
-        "@../AGENTS.md\n## Repo Instructions\n"
+        "@../AGENTS.md\n"
     );
     let task_open_target = fs_err::read_to_string(&env.task_open_log)
         .unwrap_or_else(|error| panic!("failed to read task open log: {error}"));
