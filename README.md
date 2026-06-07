@@ -57,7 +57,7 @@ hatch repo new my-org/my-repo
 
 Hatch caches repos after the first clone.
 
-_Tip: Consider adapting the global or project's default hooks (see below) if you always check out the same repo for a task._
+_Tip: Consider adapting the global or project's default [hooks](#hooks) if you always check out the same repo for a task._
 
 **6. Start an agent**
 
@@ -82,7 +82,7 @@ hatch workspace clean
 
 Hatch lists tasks and preselects ones with closed or merged PRs.
 
-Once submitted, it removes the selected tasks' files locally and deletes their remote branches (see hooks below to change this).
+Once submitted, it removes the selected tasks' files locally and deletes their remote branches (see [hooks](#hooks) below to change this).
 
 ## Recommended Customizations
 
@@ -99,8 +99,6 @@ export VISUAL='cursor -n'
 # or
 export EDITOR='vim'
 ```
-
-For more advanced changes, edit `.hatch/hooks/task_open.sh` in your workspace.
 
 ### Tab completion
 
@@ -135,12 +133,6 @@ Add this to your `~/.gitignore_global`:
 CLAUDE.local.md
 AGENTS.override.md
 ```
-
-### Agent sandboxing
-
-The default `agent_start.sh` hook launches agents through Hatch's sandbox through [nono](https://github.com/always-further/nono).
-
-Editing `.hatch/hooks/agent_start.sh` can change or bypass this behavior.
 
 ### Hooks
 
