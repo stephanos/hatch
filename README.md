@@ -63,7 +63,7 @@ _Tip: Consider adapting the global or project's default [hooks](#hooks) if you a
 
 **6. Start an agent**
 
-Run an agent from inside a workspace, project, or task.
+Run an agent from inside a project, task, or repo.
 
 ```sh
 hatch agent start codex

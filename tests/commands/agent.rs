@@ -45,6 +45,29 @@ fn agent_start_runs_hook_with_project_scope_from_project_directory() {
 }
 
 #[test]
+fn agent_start_runs_hook_with_repo_scope_from_repo_directory() {
+    let env = TestEnv::configured();
+    let repo = env.repo_marker("api", "setup-ci", "web", "https://github.com/acme/web.git");
+    let nested = repo.join("src");
+    fs::create_dir_all(&nested)
+        .unwrap_or_else(|error| panic!("failed to create nested repo path: {error}"));
+    env.write(
+        ".hatch/hooks/agent_start.sh",
+        "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --scope-path)\n      printf '%s\\n' \"$2\"\n      exit 0\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nexit 1\n",
+    );
+
+    let output = env.run_output_in_dir(&["agent", "start", "codex"], None, &nested);
+
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout).trim(),
+        fs::canonicalize(repo)
+            .unwrap_or_else(|error| panic!("failed to canonicalize repo path: {error}"))
+            .display()
+            .to_string()
+    );
+}
+
+#[test]
 fn agent_start_uses_project_hook_when_available() {
     let env = TestEnv::configured();
     let task = env.task("api", "setup-ci");
@@ -64,21 +87,14 @@ fn agent_start_uses_project_hook_when_available() {
 }
 
 #[test]
-fn agent_start_runs_hook_with_workspace_scope_from_workspace_directory() {
+fn agent_start_fails_from_workspace_directory() {
     let env = TestEnv::configured();
-    env.write(
-        ".hatch/hooks/agent_start.sh",
-        "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --scope-path)\n      printf '%s\\n' \"$2\"\n      exit 0\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nexit 1\n",
-    );
 
     let output = env.run_output_in_dir(&["agent", "start", "custom-agent"], None, &env.workspace);
 
-    assert_eq!(
-        String::from_utf8_lossy(&output.stdout).trim(),
-        fs::canonicalize(&env.workspace)
-            .unwrap_or_else(|error| panic!("failed to canonicalize workspace path: {error}"))
-            .display()
-            .to_string()
+    env.assert_failure_contains(
+        &output,
+        "agent start must be run from inside a Hatch project, task, or repo",
     );
 }
 
