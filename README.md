@@ -138,30 +138,25 @@ AGENTS.override.md
 
 Hooks define the behavior of the corresponding CLI commands. Change them if you want to add or remove behavior.
 
-Hooks are shell scripts that live in `.hatch/hooks` in the workspace/project folder.
-Any hooks defined in the project folder override hooks in the workspace folder.
-A non-zero hook exit code stops the parent command.
-Hatch also writes `<hook>.default` copies in the workspace hooks directory. These files contain Hatch's current bundled defaults and are refreshed by workspace-aware commands. Edit `<hook>.sh` to customize behavior; Hatch upgrades it only while it still matches the previous bundled default.
+Hooks are shell scripts in `.hatch/hooks`:
+
+- Workspace hooks define the default behavior.
+- Project hooks override workspace hooks.
+- A non-zero hook exit code stops the parent command.
+- Edit `<hook>.sh` to customize behavior.
+
+Hatch also writes `<hook>.default` copies in the workspace hooks directory. These contain Hatch's bundled defaults and are refreshed by workspace-aware commands. Hatch upgrades `<hook>.sh` only while it still matches the previous bundled default.
 
 Available hook files:
 
-- `agent_start.sh`
-- `project_new.sh`
-- `repo_new.sh`
-- `repo_delete.sh`
-- `task_new.sh`
-- `task_open.sh`
-
-Each hook receives named arguments:
-
-- `--project-path`
-- `--task-path`
-- `--clone-url`
-- `--repo-path`
-- `--base-branch`
-- `--agent`
-- `--scope-path`
-- `--dry-run`
+| Hook | Runs for |
+| --- | --- |
+| `agent_start.sh` | `hatch agent start` |
+| `project_new.sh` | `hatch project new` |
+| `repo_new.sh` | `hatch repo new` |
+| `repo_delete.sh` | `hatch workspace clean` or `hatch project clean` when removing task repos |
+| `task_new.sh` | `hatch task new` |
+| `task_open.sh` | `hatch task open`, and after `hatch task new` unless Hatch is non-interactive |
 
 ## Development Tasks
 
