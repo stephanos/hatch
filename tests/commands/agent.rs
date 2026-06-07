@@ -103,7 +103,7 @@ fn workspace_new_scaffolds_agent_start_hook() {
 }
 
 #[test]
-fn default_agent_start_hook_delegates_to_rust_launch_policy() {
+fn default_agent_start_hook_spells_out_sandbox_policy() {
     let env = TestEnv::configured();
     let task = env.task("api", "setup-ci");
     let fake_hatch = env.path(".hatch-test-hatch");
@@ -134,8 +134,9 @@ printf '%s\\n' \"$*\" > '{}'\n",
         .unwrap_or_else(|error| panic!("failed to read fake hatch log: {error}"));
     let task = fs::canonicalize(task)
         .unwrap_or_else(|error| panic!("failed to canonicalize task path: {error}"));
-    assert!(command.contains("__agent-launch codex"));
-    assert!(command.contains(&format!("--workspace-root {}", env.workspace.display())));
-    assert!(command.contains(&format!("--scope-path {}", task.display())));
+    assert!(command.contains("__agent-exec codex"));
+    assert!(command.contains("--profile always-further/codex"));
+    assert!(!command.contains("--profile-cache"));
+    assert!(command.contains(&format!("--allow {}", task.display())));
     assert!(command.ends_with("-- --version\n"));
 }

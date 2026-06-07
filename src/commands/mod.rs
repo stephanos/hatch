@@ -5,7 +5,6 @@ use std::process::{Command as StdCommand, Stdio};
 
 mod agent;
 mod agent_exec;
-mod agent_launch;
 mod agent_profile;
 mod agent_sandbox;
 mod completion;
@@ -21,7 +20,6 @@ use hatch::WorkspaceService;
 
 pub use agent::AgentCommand;
 pub use agent_exec::AgentExecArgs;
-pub use agent_launch::AgentLaunchArgs;
 pub use completion::{CarapaceCompleteArgs, CompleteArgs, CompletionsArgs};
 pub use hook::HookCommand;
 pub use project::ProjectCommand;
@@ -75,8 +73,6 @@ pub(crate) enum Command {
     Complete(CompleteArgs),
     #[command(name = "__agent-exec", hide = true)]
     AgentExec(AgentExecArgs),
-    #[command(name = "__agent-launch", hide = true)]
-    AgentLaunch(AgentLaunchArgs),
 }
 
 pub fn run(args: Args) -> anyhow::Result<()> {
@@ -107,7 +103,6 @@ pub fn run(args: Args) -> anyhow::Result<()> {
         Command::Update(args) => run_update(args),
         Command::Version => version::run(),
         Command::AgentExec(args) => agent_exec::run(args),
-        Command::AgentLaunch(args) => agent_launch::run(args),
     }
 }
 

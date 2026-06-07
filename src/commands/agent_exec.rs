@@ -12,8 +12,6 @@ pub struct AgentExecArgs {
     pub(crate) program: String,
     #[arg(long)]
     pub(crate) profile: Vec<String>,
-    #[arg(long = "profile-cache")]
-    pub(crate) profile_cache: Option<PathBuf>,
     #[arg(long)]
     pub(crate) registry: Option<String>,
     #[arg(long)]
@@ -34,7 +32,6 @@ impl AgentExecArgs {
     fn sandbox_config(&self) -> AgentSandboxConfig<'_> {
         AgentSandboxConfig {
             profile: &self.profile,
-            profile_cache: self.profile_cache.as_deref(),
             registry: self.registry.as_deref(),
             allow: &self.allow,
             read: &self.read,

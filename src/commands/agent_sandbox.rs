@@ -12,7 +12,6 @@ use path_admission::PathAdmission;
 #[derive(Debug)]
 pub(crate) struct AgentSandboxConfig<'a> {
     pub(crate) profile: &'a [String],
-    pub(crate) profile_cache: Option<&'a Path>,
     pub(crate) registry: Option<&'a str>,
     pub(crate) allow: &'a [PathBuf],
     pub(crate) read: &'a [PathBuf],
@@ -65,7 +64,7 @@ impl SandboxPlan {
         paths.push(PathAdmission::required(program, AccessMode::Read));
         paths.extend(program_support_paths(program));
         let profile_context = profile_context(workdir)?;
-        let cache_dir = profile_cache_dir(config)?;
+        let cache_dir = profile_cache_dir(workdir)?;
         let registry_url = match config.registry {
             Some(value) => value,
             None => super::agent_profile::default_registry_url(),
@@ -146,17 +145,21 @@ fn profile_context(workdir: &Path) -> anyhow::Result<ProfileContext> {
     })
 }
 
-fn profile_cache_dir(config: &AgentSandboxConfig<'_>) -> anyhow::Result<PathBuf> {
-    if let Some(path) = config.profile_cache {
-        return Ok(path.to_path_buf());
-    }
-    if let Some(path) = env::var_os("HATCH_NONO_CACHE_DIR") {
-        return Ok(PathBuf::from(path));
+fn profile_cache_dir(workdir: &Path) -> anyhow::Result<PathBuf> {
+    if let Some(workspace_root) = workspace_root_for(workdir) {
+        return Ok(workspace_root.join(".hatch/cache/nono"));
     }
     let home = env::var_os("HOME")
         .map(PathBuf::from)
         .ok_or_else(|| anyhow::anyhow!("HOME is not set"))?;
     Ok(home.join(".cache/hatch/nono"))
+}
+
+fn workspace_root_for(workdir: &Path) -> Option<PathBuf> {
+    workdir
+        .ancestors()
+        .find(|path| path.join(".hatch/lib/hatch.sh").is_file())
+        .map(Path::to_path_buf)
 }
 
 #[cfg(test)]
@@ -172,7 +175,6 @@ mod tests {
             .unwrap_or_else(|error| panic!("failed to write fake agent: {error}"));
         let config = AgentSandboxConfig {
             profile: &[],
-            profile_cache: None,
             registry: None,
             allow: &[temp.path().to_path_buf()],
             read: &[],
@@ -194,9 +196,13 @@ mod tests {
         let temp =
             tempfile::tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
         let root = temp.path();
-        let cache = root.join("cache");
         let home = root.join("home");
         let workdir = root.join("workspace");
+        let cache = workdir.join(".hatch/cache/nono");
+        fs_err::create_dir_all(workdir.join(".hatch/lib"))
+            .unwrap_or_else(|error| panic!("failed to create workspace lib: {error}"));
+        fs_err::write(workdir.join(".hatch/lib/hatch.sh"), "#!/bin/sh\n")
+            .unwrap_or_else(|error| panic!("failed to write hatch lib marker: {error}"));
         let profile_dir = cache.join("packages/always-further/codex/profiles");
         fs_err::create_dir_all(&profile_dir)
             .unwrap_or_else(|error| panic!("failed to create profile cache: {error}"));
@@ -245,7 +251,6 @@ mod tests {
         let profiles = vec!["always-further/codex".to_string()];
         let config = AgentSandboxConfig {
             profile: &profiles,
-            profile_cache: Some(&cache),
             registry: None,
             allow: &[],
             read: &[],
