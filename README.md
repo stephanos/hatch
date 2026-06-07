@@ -2,11 +2,11 @@
 
 [![release](https://img.shields.io/github/v/release/stephanos/hatch)](https://github.com/stephanos/hatch/releases/latest)
 
-`hatch` is a CLI for task-oriented git workspace management, built for AI-assisted development.
+`hatch` is a CLI for task-scoped Git workspaces, built for AI-assisted development.
 
-It creates disposable, task-scoped workspaces with isolated repo checkouts and agent context.
+It creates disposable workspaces with isolated repo checkouts and agent context.
 
-## Get Started
+## Quick Start
 
 **1. Install**
 
@@ -18,7 +18,7 @@ Or download the [latest release](https://github.com/stephanos/hatch/releases/lat
 
 **2. Init**
 
-Pass the folder where you want your projects to live.
+Choose where projects should live.
 
 ```sh
 hatch workspace new ~/Workspace
@@ -26,16 +26,16 @@ hatch workspace new ~/Workspace
 
 **3. Create projects and tasks**
 
-All tasks are grouped into projects.
+Tasks belong to projects.
 
 ```sh
 hatch project new my-project
 hatch task new my-project my-task
 ```
 
-Regardless of where you run this from, it'll create `<workspace>/my-project/my-task`.
+This creates `<workspace>/my-project/my-task`.
 
-**4. Work on a task**
+**4. Open a task**
 
 To open a task (directory) in your default editor:
 
@@ -49,13 +49,13 @@ This fuzzy matches tasks across all projects, or resolves GitHub PR URLs.
 
 **5. Clone a repo**
 
-Clone a repo and check out its HEAD as a new local branch `<github username>/<task name>`.
+Clone a repo into the task as a new local branch `<github username>/<task name>`.
 
 ```sh
 hatch repo new my-org/my-repo
 ```
 
-After the first clone, Hatch keeps a cache of the repo for faster cloning next time.
+Hatch caches repos after the first clone.
 
 _Tip: Consider adapting the global or project's default hooks (see below) if you always check out the same repo for a task._
 
@@ -72,13 +72,13 @@ Customize `.hatch/hooks/agent_start.sh` to change how agents are launched or whi
 
 **7. Cleanup tasks**
 
-After a while you might accumulate a few completed tasks. To clean them up:
+Clean up completed tasks:
 
 ```sh
 hatch workspace clean
 ```
 
-It will present a list of tasks to select; auto-selecting the ones that have closed/merged PRs.
+Hatch lists tasks and preselects ones with closed or merged PRs.
 
 Once submitted, it removes the selected tasks' files locally and deletes their remote branches (see hooks below to change this).
 
@@ -97,14 +97,6 @@ echo 'source <(hatch completions zsh)' >> ~/.zshrc
 hatch completions fish > ~/.config/fish/completions/hatch.fish
 ```
 
-Carapace can also drive completion if you prefer its shell integration:
-
-```sh
-mkdir -p ~/Library/Application\ Support/carapace/specs
-hatch completions carapace > ~/Library/Application\ Support/carapace/specs/hatch.yaml
-echo 'CARAPACE_UNFILTERED=1 source <(carapace hatch zsh)' >> ~/.zshrc
-```
-
 ### Shell aliases
 
 You can add these to your shell config:
@@ -116,7 +108,7 @@ alias new-repo='hatch repo new'
 alias open-task='hatch task open'
 ```
 
-### Ignore generated AI prompt files
+### Ignore AI agent files
 
 Add this to your `~/.gitignore_global`:
 
@@ -156,7 +148,7 @@ Each hook receives named arguments:
 
 ## Development Tasks
 
-Or to build from source, you need:
+To build from source, install:
 
 - [`mise`](https://github.com/jdx/mise)
 
