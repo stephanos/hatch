@@ -274,7 +274,7 @@ fn repo_new_includes_parent_and_repo_agents_in_override_if_repo_agents_exist() {
                 repo_path.join("CLAUDE.local.md").display()
             )
         }),
-        "@AGENTS.override.md\n"
+        "@AGENTS.override.md\n@CLAUDE.md\n"
     );
 }
 

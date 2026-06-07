@@ -52,3 +52,6 @@ if [ -f "$repo_path/AGENTS.md" ]; then
   printf '@AGENTS.md\n' >> "$repo_path/AGENTS.override.md"
 fi
 printf '@AGENTS.override.md\n' > "$repo_path/CLAUDE.local.md"
+if [ -f "$repo_path/CLAUDE.md" ]; then
+  printf '@CLAUDE.md\n' >> "$repo_path/CLAUDE.local.md"
+fi
