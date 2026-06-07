@@ -13,14 +13,14 @@ jobs:
         include:
           - runner: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: hatch-linux-x86_64
+            artifact: hatch-x86_64-unknown-linux-gnu
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            artifact: hatch-linux-arm64
+            artifact: hatch-aarch64-unknown-linux-gnu
             needs_cross: true
           - runner: macos-14
             target: aarch64-apple-darwin
-            artifact: hatch-darwin-arm64
+            artifact: hatch-aarch64-apple-darwin
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
@@ -69,14 +69,7 @@ jobs:
           HATCH_VERSION="${VERSION}" cargo build --release --target "${{ matrix.target }}" --bin hatch
           mkdir -p dist
           if [[ "${{ matrix.target }}" == *-apple-darwin ]]; then
-            dmg_staging_dir="$(mktemp -d)"
-            cp "target/${{ matrix.target }}/release/hatch" "${dmg_staging_dir}/hatch"
-            hdiutil create \
-              -volname "hatch" \
-              -srcfolder "${dmg_staging_dir}" \
-              -ov \
-              -format UDZO \
-              "dist/${{ matrix.artifact }}.dmg"
+            tar -C "target/${{ matrix.target }}/release" -czf "dist/${{ matrix.artifact }}.tar.gz" hatch
           else
             cp "target/${{ matrix.target }}/release/hatch" dist/${{ matrix.artifact }}
           fi
