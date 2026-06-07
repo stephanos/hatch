@@ -153,12 +153,12 @@ Hatch also writes `<hook>.default` copies in the workspace hooks directory. Thes
 
 Available hook files:
 
+- `agent_start.sh`
 - `project_new.sh`
 - `repo_new.sh`
 - `repo_delete.sh`
 - `task_new.sh`
 - `task_open.sh`
-- `agent_start.sh`
 
 Each hook receives named arguments:
 
