@@ -20,9 +20,9 @@ checkout_default_repo() {
   repo="$1"
   base_branch="$2"
   if [ -n "$base_branch" ]; then
-    hatch repo new "$repo" --task-path "$task_path" --base-branch "$base_branch"
+    hatch repo new "$repo" --base-branch "$base_branch"
   else
-    hatch repo new "$repo" --task-path "$task_path"
+    hatch repo new "$repo"
   fi
 }
 

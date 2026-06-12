@@ -11,10 +11,6 @@ pub enum RepoCommand {
 #[derive(Debug, Parser)]
 pub struct NewRepoArgs {
     pub(crate) repo: String,
-    /// Task directory to create the repo under.
-    pub(crate) task_path: Option<String>,
-    #[arg(long = "task-path")]
-    pub(crate) task_path_flag: Option<String>,
     #[arg(long = "base-branch")]
     pub(crate) base_branch: Option<String>,
     #[arg(long = "dir")]
@@ -33,11 +29,7 @@ fn run_new_repo_command(args: NewRepoArgs) -> anyhow::Result<()> {
     let service = super::workspace_service()?;
     let request = AddRepoRequest {
         repo: args.repo,
-        task_path: args
-            .task_path_flag
-            .or(args.task_path)
-            .unwrap_or_else(|| ".".to_string())
-            .into(),
+        task_path: ".".into(),
         checkout_dir: args.checkout_dir,
         base_branch: args.base_branch,
         force: args.force,

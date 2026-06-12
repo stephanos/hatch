@@ -27,6 +27,7 @@ pub(crate) enum WorkspaceLocation {
     },
     Repo {
         project_path: Utf8PathBuf,
+        task_path: Utf8PathBuf,
         repo_path: Utf8PathBuf,
     },
 }
@@ -49,6 +50,7 @@ pub(crate) fn resolve_agent_scope(paths: &AppPaths, current_dir: &Utf8Path) -> R
         }),
         WorkspaceLocation::Repo {
             project_path,
+            task_path: _,
             repo_path,
         } => Ok(AgentScope {
             project_path: Some(project_path),
@@ -102,6 +104,7 @@ pub(crate) fn resolve_workspace_location(
             match repo_path {
                 Some(repo_path) => WorkspaceLocation::Repo {
                     project_path,
+                    task_path,
                     repo_path,
                 },
                 None => WorkspaceLocation::Task {
@@ -112,25 +115,6 @@ pub(crate) fn resolve_workspace_location(
         }
         None => WorkspaceLocation::Project { project_path },
     })
-}
-
-pub(crate) fn resolve_task_context(path: &Utf8Path) -> Result<TaskContext> {
-    let canonical = canonical_utf8(path)?;
-    for candidate in canonical.ancestors() {
-        let Some(project_path) = candidate.parent() else {
-            continue;
-        };
-        if !project_path
-            .join(crate::environment::PROJECT_MARKER_DIRECTORY)
-            .exists()
-        {
-            continue;
-        }
-        return task_context(project_path, candidate);
-    }
-    Err(crate::Error::Message(
-        "must be run from within a task folder".to_string(),
-    ))
 }
 
 pub(crate) fn task_context_for_task_path(task_path: &Utf8Path) -> Result<TaskContext> {
@@ -303,27 +287,6 @@ mod tests {
             .to_string();
 
         assert!(error.contains("must be run from inside a Hatch workspace"));
-    }
-
-    #[test]
-    fn resolves_task_context_from_nested_path() {
-        let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
-        let workspace = Utf8PathBuf::from_path_buf(temp.path().join("Workspace"))
-            .unwrap_or_else(|path| panic!("path is not valid UTF-8: {}", path.display()));
-        let nested = workspace.join("api/setup-ci/repo/src");
-        fs_err::create_dir_all(workspace.join("api/.hatch"))
-            .unwrap_or_else(|error| panic!("failed to create project marker: {error}"));
-        fs_err::create_dir_all(&nested)
-            .unwrap_or_else(|error| panic!("failed to create nested path: {error}"));
-
-        let context = resolve_task_context(&nested)
-            .unwrap_or_else(|error| panic!("failed to resolve task context: {error}"));
-
-        assert_eq!(context.task.id, "api/setup-ci");
-        assert_eq!(
-            context.project_path,
-            workspace.join("api").canonicalize_utf8().unwrap()
-        );
     }
 
     #[test]

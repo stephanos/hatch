@@ -1,7 +1,5 @@
 use fs_err as fs;
 
-use std::path::Path;
-
 use crate::support::{FakeEditor, FakeGh, FakeGit, TestEnv, make_git_repo_with_origin};
 
 #[test]
@@ -11,7 +9,7 @@ fn repo_new_rejects_bare_repo_when_no_org_can_be_inferred() {
     env.mkdir("api/setup-ci");
     env.mkdir("api/.hatch");
 
-    let output = env.run_output_allow_failure(&["repo", "new", "web", path_arg(&task)], None);
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "web"], None, &task);
 
     env.assert_failure_contains(&output, "Could not infer repo namespace");
 }
@@ -25,13 +23,13 @@ fn repo_new_rejects_bare_repo_when_task_repos_use_mixed_orgs() {
     make_git_repo_with_origin(&task.join("backend"), "https://github.com/acme/backend.git");
     make_git_repo_with_origin(&task.join("frontend"), "git@github.com:other/frontend.git");
 
-    let output = env.run_output_allow_failure(&["repo", "new", "web", path_arg(&task)], None);
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "web"], None, &task);
 
     env.assert_failure_contains(&output, "multiple GitHub namespaces");
 }
 
 #[test]
-fn repo_new_adds_repo_from_top_level_command() {
+fn repo_new_adds_repo_from_task_directory() {
     let env = TestEnv::configured();
     let task = env.path("api/setup-ci");
     env.mkdir("api/setup-ci");
@@ -39,7 +37,7 @@ fn repo_new_adds_repo_from_top_level_command() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output(&["repo", "new", "acme/web", path_arg(&task)], None);
+    let output = env.run_output_in_dir(&["repo", "new", "acme/web"], None, &task);
 
     env.assert_success(&output);
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "");
@@ -62,10 +60,11 @@ fn repo_new_clones_from_cache_instead_of_copying_git_directory() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output_with_env(
-        &["repo", "new", "acme/web", path_arg(&task)],
+    let output = env.run_output_with_extra_env_in_dir(
+        &["repo", "new", "acme/web"],
         None,
         &[("HATCH_GIT_LOG", git_log.to_string_lossy().to_string())],
+        &task,
     );
 
     env.assert_success(&output);
@@ -96,16 +95,10 @@ fn repo_new_uses_explicit_checkout_directory_name() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output(
-        &[
-            "repo",
-            "new",
-            "acme/web",
-            path_arg(&task),
-            "--dir",
-            "frontend",
-        ],
+    let output = env.run_output_in_dir(
+        &["repo", "new", "acme/web", "--dir", "frontend"],
         None,
+        &task,
     );
 
     env.assert_success(&output);
@@ -125,6 +118,7 @@ fn repo_new_help_shows_dir_flag() {
 
     assert!(stdout.contains("--dir <CHECKOUT_DIR>"));
     assert!(!stdout.contains("--checkout-dir"));
+    assert!(!stdout.contains("--task-path"));
 }
 
 #[test]
@@ -135,8 +129,8 @@ fn repo_new_unknown_flag_shows_full_help_without_positional_tip() {
     let stderr = String::from_utf8_lossy(&output.stderr);
 
     assert!(stderr.contains("unexpected argument '--wat'"));
-    assert!(stderr.contains("Usage: hatch repo new [OPTIONS] <REPO> [TASK_PATH]"));
-    assert!(stderr.contains("--task-path <TASK_PATH_FLAG>"));
+    assert!(stderr.contains("Usage: hatch repo new [OPTIONS] <REPO>"));
+    assert!(!stderr.contains("--task-path"));
     assert!(stderr.contains("--base-branch <BASE_BRANCH>"));
     assert!(stderr.contains("--dir <CHECKOUT_DIR>"));
     assert!(!stderr.contains("to pass '--wat' as a value"));
@@ -151,16 +145,10 @@ fn repo_new_existing_checkout_directory_error_uses_explicit_name() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output_allow_failure(
-        &[
-            "repo",
-            "new",
-            "acme/web",
-            path_arg(&task),
-            "--dir",
-            "frontend",
-        ],
+    let output = env.run_output_allow_failure_in_dir(
+        &["repo", "new", "acme/web", "--dir", "frontend"],
         None,
+        &task,
     );
 
     env.assert_failure_contains(&output, "repo checkout directory 'frontend'");
@@ -175,16 +163,10 @@ fn repo_new_rejects_invalid_checkout_directory_name() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output_allow_failure(
-        &[
-            "repo",
-            "new",
-            "acme/web",
-            path_arg(&task),
-            "--dir",
-            "../web",
-        ],
+    let output = env.run_output_allow_failure_in_dir(
+        &["repo", "new", "acme/web", "--dir", "../web"],
         None,
+        &task,
     );
 
     env.assert_failure_contains(&output, "checkout directory name must match");
@@ -214,6 +196,39 @@ fn repo_new_from_task_directory_uses_project_hook_templates() {
 }
 
 #[test]
+fn repo_new_from_task_subdirectory_creates_repo_at_task_root() {
+    let env = TestEnv::configured();
+    let task = env.path("api/setup-ci");
+    let nested = task.join("notes");
+    env.mkdir("api/setup-ci/notes");
+    env.mkdir(".hatch");
+    env.mkdir("api/.hatch");
+    env.install_git(FakeGit::Clone);
+
+    let output = env.run_output_in_dir(&["repo", "new", "acme/web"], None, &nested);
+
+    env.assert_success(&output);
+    assert_eq!(
+        env.read("api/setup-ci/web/.clone_url"),
+        "https://github.com/acme/web.git\n"
+    );
+    assert!(!env.path("api/setup-ci/notes/web").exists());
+}
+
+#[test]
+fn repo_new_fails_outside_task_directory() {
+    let env = TestEnv::configured();
+    let project = env.path("api");
+    env.mkdir("api/.hatch");
+    env.install_git(FakeGit::Clone);
+
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "acme/web"], None, &project);
+
+    env.assert_failure_contains(&output, "must be run from within a task folder");
+    assert!(!env.path("api/web").exists());
+}
+
+#[test]
 fn repo_new_existing_checkout_directory_error_names_destination() {
     let env = TestEnv::configured();
     let task = env.path("api/setup-ci");
@@ -221,7 +236,7 @@ fn repo_new_existing_checkout_directory_error_names_destination() {
     env.mkdir("api/.hatch");
     env.install_git(FakeGit::Clone);
 
-    let output = env.run_output_allow_failure(&["repo", "new", "acme/web", path_arg(&task)], None);
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "acme/web"], None, &task);
 
     env.assert_failure_contains(&output, "repo checkout directory 'web'");
     env.assert_failure_contains(&output, &task.join("web").display().to_string());
@@ -238,7 +253,7 @@ fn repo_new_prints_hook_path_when_hook_fails() {
         "#!/usr/bin/env sh\nprintf 'boom\\n' >&2\nexit 1\n",
     );
 
-    let output = env.run_output_allow_failure(&["repo", "new", "acme/web", path_arg(&task)], None);
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "acme/web"], None, &task);
 
     env.assert_failure_contains(&output, ".hatch/hooks/repo_new.sh");
     env.assert_failure_contains(&output, "boom");
@@ -254,7 +269,7 @@ fn repo_new_includes_parent_and_repo_agents_in_override_if_repo_agents_exist() {
 
     env.install_git(FakeGit::CloneWithAgents);
 
-    let output = env.run_output(&["repo", "new", "acme/web", path_arg(&task)], None);
+    let output = env.run_output_in_dir(&["repo", "new", "acme/web"], None, &task);
 
     env.assert_success(&output);
     let repo_path = task.join("web");
@@ -297,7 +312,7 @@ fn repo_new_infers_org_from_existing_task_repos() {
     env.install_git(FakeGit::Clone);
     env.install_gh(FakeGh::Login);
 
-    let output = env.run_output(&["repo", "new", "web", path_arg(&task)], None);
+    let output = env.run_output_in_dir(&["repo", "new", "web"], None, &task);
 
     env.assert_success(&output);
     assert_eq!(
@@ -326,12 +341,7 @@ fn repo_new_rejects_gitlab_namespace_from_existing_task_repos() {
     env.install_gh(FakeGh::Login);
     env.install_editor("editor", FakeEditor::Noop);
 
-    let output = env.run_output_allow_failure(&["repo", "new", "web", path_arg(&task)], None);
+    let output = env.run_output_allow_failure_in_dir(&["repo", "new", "web"], None, &task);
 
     env.assert_failure_contains(&output, "Task repos include non-GitHub URLs");
-}
-
-fn path_arg(path: &Path) -> &str {
-    path.to_str()
-        .unwrap_or_else(|| panic!("path must be UTF-8: {}", path.display()))
 }

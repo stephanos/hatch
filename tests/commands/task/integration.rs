@@ -14,7 +14,7 @@ fn end_to_end_hook_project_task_delete_flow() {
     env.run_output(&["workspace", "new", &workspace], None);
     env.write(
         ".hatch/hooks/task_new.sh",
-        "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --task-path)\n      task_path=\"$2\"\n      shift 2\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nprintf '@../AGENTS.md\\n' > \"$task_path/AGENTS.md\"\nprintf '@AGENTS.md\\n' > \"$task_path/CLAUDE.md\"\nhatch repo new acme/web --task-path \"$task_path\" --base-branch main\n",
+        "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --task-path)\n      task_path=\"$2\"\n      shift 2\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nprintf '@../AGENTS.md\\n' > \"$task_path/AGENTS.md\"\nprintf '@AGENTS.md\\n' > \"$task_path/CLAUDE.md\"\nhatch repo new acme/web --base-branch main\n",
     );
 
     let project = env.run_stdout(&["project", "new", "api"]);
@@ -82,7 +82,7 @@ fn task_new_checks_out_local_git_repo_without_network() {
     env.write(
         ".hatch/hooks/task_new.sh",
         format!(
-            "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --task-path)\n      task_path=\"$2\"\n      shift 2\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nprintf '@../AGENTS.md\\n' > \"$task_path/AGENTS.md\"\nprintf '@AGENTS.md\\n' > \"$task_path/CLAUDE.md\"\nhatch repo new \"file://{}\" --task-path \"$task_path\" --base-branch main\n",
+            "#!/usr/bin/env sh\nwhile [ \"$#\" -gt 0 ]; do\n  case \"$1\" in\n    --task-path)\n      task_path=\"$2\"\n      shift 2\n      ;;\n    *)\n      shift\n      ;;\n  esac\ndone\nprintf '@../AGENTS.md\\n' > \"$task_path/AGENTS.md\"\nprintf '@AGENTS.md\\n' > \"$task_path/CLAUDE.md\"\nhatch repo new \"file://{}\" --base-branch main\n",
             remote.display()
         ),
     );

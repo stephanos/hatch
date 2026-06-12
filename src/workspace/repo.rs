@@ -2,7 +2,7 @@ use crate::{AddRepoRequest, AppPaths, Result};
 use camino::Utf8Path;
 
 use super::helpers::validate_identifier;
-use super::location;
+use super::location::{self, WorkspaceLocation};
 use super::materialize::RepoMaterializationPlan;
 use super::repo_lifecycle::RepoLifecycleService;
 use super::shared::WorkspaceServiceCore;
@@ -42,22 +42,37 @@ impl RepoOperationsService {
         &self,
         request: RepoCheckoutPlanRequest<'_>,
     ) -> Result<RepoMaterializationPlan> {
-        let context = location::resolve_task_context(request.task_path)?;
-        let task = context.task;
+        let (project_path, task_path) =
+            match location::resolve_workspace_location(request.paths, request.task_path)? {
+                WorkspaceLocation::Task {
+                    project_path,
+                    task_path,
+                }
+                | WorkspaceLocation::Repo {
+                    project_path,
+                    task_path,
+                    ..
+                } => (project_path, task_path),
+                WorkspaceLocation::Workspace { .. } | WorkspaceLocation::Project { .. } => {
+                    return Err(crate::Error::Message(
+                        "repo new must be run from within a task folder".to_string(),
+                    ));
+                }
+            };
         let spec = self
             .core
             .repo_resolver
-            .resolve_repo_spec_from_task(request.repo_input, &task.path)?;
+            .resolve_repo_spec_from_task(request.repo_input, &task_path)?;
         let checkout_dir = match request.checkout_dir {
             Some(value) => validate_identifier("checkout directory name", &value)?,
             None => spec.repo.clone(),
         };
-        let repo_path = task.path.join(checkout_dir);
+        let repo_path = task_path.join(checkout_dir);
         let base_branch = request.base_branch_override;
         Ok(RepoMaterializationPlan {
             paths: request.paths.clone(),
-            project_path: context.project_path,
-            task_path: task.path,
+            project_path,
+            task_path,
             clone_url: spec.clone_url,
             repo_path,
             base_branch,

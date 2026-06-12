@@ -190,6 +190,15 @@ impl TestEnv {
         self.run_output_with_env_in_dir(args, input, &[], Some(current_dir), true, true)
     }
 
+    pub fn run_output_allow_failure_in_dir(
+        &self,
+        args: &[&str],
+        input: Option<&str>,
+        current_dir: &Path,
+    ) -> Output {
+        self.run_output_with_env_in_dir(args, input, &[], Some(current_dir), true, true)
+    }
+
     pub fn run_output_discovering_workspace_in_dir(
         &self,
         args: &[&str],
