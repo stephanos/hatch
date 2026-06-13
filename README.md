@@ -45,7 +45,7 @@ hatch task open my-task
 hatch task open https://github.com/acme/web/pull/123
 ```
 
-This fuzzy matches tasks across all projects, or resolves GitHub PR URLs. 
+This fuzzy matches tasks across all projects, or resolves GitHub PR URLs.
 
 _Tip: Add [tab completion](#tab-completion) to your shell and customize which [editor](#editor) to open._
 
@@ -151,14 +151,14 @@ Hatch also writes `<hook>.default` copies in the workspace hooks directory. Thes
 
 Available hook files:
 
-| Hook | Runs for |
-| --- | --- |
-| `agent_start.sh` | `hatch agent start` |
-| `project_new.sh` | `hatch project new` |
-| `repo_new.sh` | `hatch repo new` |
-| `repo_delete.sh` | `hatch workspace clean` or `hatch project clean` when removing task repos |
-| `task_new.sh` | `hatch task new` |
-| `task_open.sh` | `hatch task open`, and after `hatch task new` unless Hatch is non-interactive |
+| Hook             | Runs for                                                                      |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `agent_start.sh` | `hatch agent start`                                                           |
+| `project_new.sh` | `hatch project new`                                                           |
+| `repo_new.sh`    | `hatch repo new`                                                              |
+| `repo_delete.sh` | `hatch workspace clean` or `hatch project clean` when removing task repos     |
+| `task_new.sh`    | `hatch task new`                                                              |
+| `task_open.sh`   | `hatch task open`, and after `hatch task new` unless Hatch is non-interactive |
 
 ## Development Tasks
 

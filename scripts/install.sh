@@ -7,6 +7,8 @@ install_path="$install_dir/hatch"
 
 cd "$root"
 cargo build --release --bin hatch
+git config --local core.hooksPath .githooks
 install -d "$install_dir"
 install -m 0755 target/release/hatch "$install_path"
 echo "Installed CLI $install_path"
+echo "Configured git hooks at .githooks"

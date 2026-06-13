@@ -1,0 +1,38 @@
+#!/usr/bin/env sh
+set -eu
+
+release_tags=""
+
+while IFS=' ' read -r local_ref local_oid remote_ref remote_oid; do
+  [ "${local_ref}" = "(delete)" ] && continue
+
+  case "${remote_ref}" in
+    refs/tags/v*)
+      release_tag="${remote_ref#refs/tags/}"
+      release_tags="${release_tags} ${release_tag}"
+      ;;
+  esac
+done
+
+[ -n "${release_tags}" ] || exit 0
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "${repo_root}"
+
+for release_tag in ${release_tags}; do
+  if ! printf '%s\n' "${release_tag}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+    echo "pre-push: release tag must use full semver, for example: v0.5.0" >&2
+    exit 1
+  fi
+
+  tag_version="${release_tag#v}"
+  cargo_version="$(git show "${release_tag}:Cargo.toml" | sed -n 's/^version = "\(.*\)"/\1/p' | head -n 1)"
+  if [ "${tag_version}" != "${cargo_version}" ]; then
+    echo "pre-push: release tag version (${tag_version}) must match Cargo.toml version (${cargo_version})" >&2
+    exit 1
+  fi
+done
+
+echo "pre-push: validating release tag push"
+mise run check
+mise run test
