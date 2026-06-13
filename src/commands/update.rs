@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use super::version::current_version;
+
 #[derive(Debug, Parser)]
 pub struct UpdateArgs {
     #[arg(long)]
@@ -25,7 +27,7 @@ const SELF_UPDATE_GITHUB_REPO_BIN: &str = "hatch";
 pub fn run_update(args: UpdateArgs) -> anyhow::Result<()> {
     if args.check {
         let latest = latest_release_version_cached()?;
-        let current = env!("CARGO_PKG_VERSION");
+        let current = current_version();
         if latest == current {
             println!("hatch is up to date ({current})");
             return Ok(());
@@ -66,7 +68,7 @@ fn self_update_builder() -> anyhow::Result<Box<dyn self_update::update::ReleaseU
         .repo_name(SELF_UPDATE_GITHUB_REPO)
         .bin_name(SELF_UPDATE_GITHUB_REPO_BIN)
         .show_download_progress(false)
-        .current_version(env!("CARGO_PKG_VERSION"))
+        .current_version(current_version())
         .no_confirm(true)
         .build()?)
 }

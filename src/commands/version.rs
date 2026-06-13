@@ -10,7 +10,7 @@ pub(crate) fn run() -> Result<()> {
     Ok(())
 }
 
-fn current_version() -> &'static str {
+pub(super) fn current_version() -> &'static str {
     option_env!("HATCH_VERSION")
         .unwrap_or(env!("CARGO_PKG_VERSION"))
         .trim_start_matches('v')
