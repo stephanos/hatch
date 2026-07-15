@@ -61,20 +61,7 @@ Hatch caches repos after the first clone.
 
 _Tip: Consider adapting the global or project's default [hooks](#hooks) if you always check out the same repo for a task._
 
-**6. Start an agent**
-
-Run an agent from inside a project, task, or repo.
-
-```sh
-hatch agent start codex
-hatch agent start claude -- --model opus
-```
-
-Agents start inside a sandbox by default with read/write access to the current scope; and applying agent-specific profiles.
-
-See [agent sandboxing](#agent-sandboxing) for details.
-
-**7. Cleanup tasks**
+**6. Cleanup tasks**
 
 Clean up completed tasks:
 
@@ -124,7 +111,6 @@ alias new-project='hatch project new'
 alias new-task='hatch task new'
 alias new-repo='hatch repo new'
 alias open-task='hatch task open'
-alias start-agent='hatch agent start'
 ```
 
 ### Ignore AI agent files
@@ -153,7 +139,6 @@ Available hook files:
 
 | Hook             | Runs for                                                                      |
 | ---------------- | ----------------------------------------------------------------------------- |
-| `agent_start.sh` | `hatch agent start`                                                           |
 | `project_new.sh` | `hatch project new`                                                           |
 | `repo_new.sh`    | `hatch repo new`                                                              |
 | `repo_delete.sh` | `hatch workspace clean` or `hatch project clean` when removing task repos     |
