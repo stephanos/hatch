@@ -9,7 +9,6 @@ Commands:
   project      
   task         
   repo         
-  agent        
   update       
   version      
   completions  

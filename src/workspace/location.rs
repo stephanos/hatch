@@ -8,12 +8,6 @@ pub(crate) struct TaskContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct AgentScope {
-    pub(crate) project_path: Option<Utf8PathBuf>,
-    pub(crate) scope_path: Utf8PathBuf,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum WorkspaceLocation {
     Workspace {
         workspace_root: Utf8PathBuf,
@@ -32,33 +26,6 @@ pub(crate) enum WorkspaceLocation {
     },
 }
 
-pub(crate) fn resolve_agent_scope(paths: &AppPaths, current_dir: &Utf8Path) -> Result<AgentScope> {
-    match resolve_workspace_location(paths, current_dir)? {
-        WorkspaceLocation::Workspace { .. } => Err(crate::Error::Message(
-            "agent start must be run from inside a Hatch project, task, or repo".to_string(),
-        )),
-        WorkspaceLocation::Project { project_path } => Ok(AgentScope {
-            project_path: Some(project_path.clone()),
-            scope_path: project_path,
-        }),
-        WorkspaceLocation::Task {
-            project_path,
-            task_path,
-        } => Ok(AgentScope {
-            project_path: Some(project_path),
-            scope_path: task_path,
-        }),
-        WorkspaceLocation::Repo {
-            project_path,
-            task_path: _,
-            repo_path,
-        } => Ok(AgentScope {
-            project_path: Some(project_path),
-            scope_path: repo_path,
-        }),
-    }
-}
-
 pub(crate) fn resolve_workspace_location(
     paths: &AppPaths,
     current_dir: &Utf8Path,
@@ -67,7 +34,7 @@ pub(crate) fn resolve_workspace_location(
     let current_dir = canonical_utf8(current_dir)?;
     if current_dir != workspace_root && !current_dir.starts_with(&workspace_root) {
         return Err(crate::Error::Message(
-            "agent start must be run from inside a Hatch workspace".to_string(),
+            "path must be inside a Hatch workspace".to_string(),
         ));
     }
     let project_path = current_dir
@@ -183,74 +150,6 @@ mod tests {
     }
 
     #[test]
-    fn resolves_task_scope_from_nested_path() {
-        let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
-        let workspace = Utf8PathBuf::from_path_buf(temp.path().join("Workspace"))
-            .unwrap_or_else(|path| panic!("path is not valid UTF-8: {}", path.display()));
-        let nested = workspace.join("api/setup-ci/notes/src");
-        fs_err::create_dir_all(workspace.join("api/.hatch"))
-            .unwrap_or_else(|error| panic!("failed to create project marker: {error}"));
-        fs_err::create_dir_all(&nested)
-            .unwrap_or_else(|error| panic!("failed to create nested path: {error}"));
-
-        let scope = resolve_agent_scope(&test_paths(&workspace), &nested)
-            .unwrap_or_else(|error| panic!("failed to resolve agent scope: {error}"));
-
-        assert_eq!(
-            scope.project_path,
-            Some(workspace.join("api").canonicalize_utf8().unwrap())
-        );
-        assert_eq!(
-            scope.scope_path,
-            workspace.join("api/setup-ci").canonicalize_utf8().unwrap()
-        );
-    }
-
-    #[test]
-    fn resolves_repo_scope_from_nested_path() {
-        let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
-        let workspace = Utf8PathBuf::from_path_buf(temp.path().join("Workspace"))
-            .unwrap_or_else(|path| panic!("path is not valid UTF-8: {}", path.display()));
-        let nested = workspace.join("api/setup-ci/repo/src");
-        fs_err::create_dir_all(workspace.join("api/.hatch"))
-            .unwrap_or_else(|error| panic!("failed to create project marker: {error}"));
-        fs_err::create_dir_all(workspace.join("api/setup-ci/repo/.git"))
-            .unwrap_or_else(|error| panic!("failed to create repo marker: {error}"));
-        fs_err::create_dir_all(&nested)
-            .unwrap_or_else(|error| panic!("failed to create nested path: {error}"));
-
-        let scope = resolve_agent_scope(&test_paths(&workspace), &nested)
-            .unwrap_or_else(|error| panic!("failed to resolve agent scope: {error}"));
-
-        assert_eq!(
-            scope.project_path,
-            Some(workspace.join("api").canonicalize_utf8().unwrap())
-        );
-        assert_eq!(
-            scope.scope_path,
-            workspace
-                .join("api/setup-ci/repo")
-                .canonicalize_utf8()
-                .unwrap()
-        );
-    }
-
-    #[test]
-    fn rejects_workspace_scope_for_agent_start() {
-        let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
-        let workspace = Utf8PathBuf::from_path_buf(temp.path().join("Workspace"))
-            .unwrap_or_else(|path| panic!("path is not valid UTF-8: {}", path.display()));
-        fs_err::create_dir_all(&workspace)
-            .unwrap_or_else(|error| panic!("failed to create workspace: {error}"));
-
-        let error = resolve_agent_scope(&test_paths(&workspace), &workspace)
-            .unwrap_err()
-            .to_string();
-
-        assert!(error.contains("must be run from inside a Hatch project, task, or repo"));
-    }
-
-    #[test]
     fn resolves_workspace_location_from_project_path() {
         let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
         let workspace = Utf8PathBuf::from_path_buf(temp.path().join("Workspace"))
@@ -271,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_paths_outside_workspace() {
+    fn rejects_workspace_locations_outside_workspace() {
         let temp = tempdir().unwrap_or_else(|error| panic!("failed to create tempdir: {error}"));
         let root = Utf8PathBuf::from_path_buf(temp.path().to_path_buf())
             .unwrap_or_else(|path| panic!("path is not valid UTF-8: {}", path.display()));
@@ -282,11 +181,11 @@ mod tests {
         fs_err::create_dir_all(&outside)
             .unwrap_or_else(|error| panic!("failed to create outside path: {error}"));
 
-        let error = resolve_agent_scope(&test_paths(&workspace), &outside)
+        let error = resolve_workspace_location(&test_paths(&workspace), &outside)
             .unwrap_err()
             .to_string();
 
-        assert!(error.contains("must be run from inside a Hatch workspace"));
+        assert!(error.contains("path must be inside a Hatch workspace"));
     }
 
     #[test]

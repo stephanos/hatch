@@ -1,8 +1,6 @@
 #[path = "support/mod.rs"]
 mod support;
 
-#[path = "commands/agent.rs"]
-mod agent;
 #[path = "commands/completion.rs"]
 mod completion;
 #[path = "commands/project.rs"]

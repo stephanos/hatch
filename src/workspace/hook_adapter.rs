@@ -96,26 +96,6 @@ impl WorkspaceHookAdapter {
         Ok(outcome)
     }
 
-    pub(crate) fn run_agent_start(
-        &self,
-        paths: &AppPaths,
-        project_path: Option<&Utf8Path>,
-        agent: String,
-        scope_path: &Utf8Path,
-        args: Vec<String>,
-    ) -> Result<HookOutcome> {
-        let context =
-            crate::hooks::HookContext::agent_start(paths, project_path, agent, scope_path, args);
-        let outcome = self.run_printed(HookName::AgentStart, &context)?;
-        if matches!(outcome, HookOutcome::Missing) {
-            return Err(Error::Message(format!(
-                "agent_start hook not found: {}",
-                paths.hooks_directory.join("agent_start.sh")
-            )));
-        }
-        Ok(outcome)
-    }
-
     fn run_printed(
         &self,
         name: HookName,

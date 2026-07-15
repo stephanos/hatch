@@ -95,11 +95,6 @@ impl TestEnv {
         )
         .unwrap_or_else(|error| panic!("failed to write repo_delete hook: {error}"));
         fs::write(
-            env.workspace.join(".hatch/hooks/agent_start.sh"),
-            include_str!("../../templates/hooks/agent_start.sh"),
-        )
-        .unwrap_or_else(|error| panic!("failed to write agent_start hook: {error}"));
-        fs::write(
             env.workspace.join(".hatch/default-repos.txt"),
             include_str!("../../templates/default-repos.txt"),
         )

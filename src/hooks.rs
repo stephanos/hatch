@@ -13,8 +13,6 @@ pub struct HookContext {
     pub clone_url: Option<String>,
     pub repo_path: Option<Utf8PathBuf>,
     pub base_branch: Option<String>,
-    pub agent: Option<String>,
-    pub scope_path: Option<Utf8PathBuf>,
     pub extra_args: Vec<String>,
     pub forwarded_args: Vec<String>,
 }
@@ -26,7 +24,6 @@ pub enum HookName {
     TaskOpen,
     RepoNew,
     RepoDelete,
-    AgentStart,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -37,14 +34,13 @@ pub(crate) struct HookDefinition {
 }
 
 impl HookName {
-    pub(crate) fn all() -> [Self; 6] {
+    pub(crate) fn all() -> [Self; 5] {
         [
             Self::ProjectNew,
             Self::TaskNew,
             Self::TaskOpen,
             Self::RepoNew,
             Self::RepoDelete,
-            Self::AgentStart,
         ]
     }
 
@@ -93,11 +89,6 @@ impl HookName {
                 name: "repo_delete",
                 legacy_names: &["repo_cleanup", "cleanup"],
                 default_template: include_str!("../templates/hooks/repo_delete.sh"),
-            },
-            Self::AgentStart => HookDefinition {
-                name: "agent_start",
-                legacy_names: &[],
-                default_template: include_str!("../templates/hooks/agent_start.sh"),
             },
         }
     }
@@ -161,7 +152,6 @@ impl HookRunner {
         let current_directory = [
             &context.repo_path,
             &context.task_path,
-            &context.scope_path,
             &context.project_path,
         ]
         .into_iter()
@@ -260,8 +250,6 @@ impl HookContext {
             clone_url: None,
             repo_path: None,
             base_branch: None,
-            agent: None,
-            scope_path: None,
             extra_args: Vec::new(),
             forwarded_args: Vec::new(),
         }
@@ -310,22 +298,6 @@ impl HookContext {
         context
     }
 
-    pub(crate) fn agent_start(
-        paths: &AppPaths,
-        project_path: Option<&Utf8Path>,
-        agent: String,
-        scope_path: &Utf8Path,
-        args: Vec<String>,
-    ) -> Self {
-        let mut context = Self::workspace(paths);
-        context.project_path = project_path.map(Utf8Path::to_path_buf);
-        context.project_hooks_directory = project_path.map(project_hooks_directory);
-        context.agent = Some(agent);
-        context.scope_path = Some(scope_path.to_path_buf());
-        context.forwarded_args = args;
-        context
-    }
-
     pub(crate) fn with_forwarded_args(mut self, args: &[String]) -> Self {
         let mut index = 0;
         while index < args.len() {
@@ -371,14 +343,6 @@ impl HookContext {
             arguments.push("--base-branch".to_string());
             arguments.push(value.clone());
         }
-        if let Some(value) = &self.agent {
-            arguments.push("--agent".to_string());
-            arguments.push(value.clone());
-        }
-        if let Some(value) = &self.scope_path {
-            arguments.push("--scope-path".to_string());
-            arguments.push(value.to_string());
-        }
         arguments.extend(self.extra_args.iter().cloned());
         if !self.forwarded_args.is_empty() {
             arguments.push("--".to_string());
@@ -407,8 +371,6 @@ mod tests {
             clone_url: None,
             repo_path: None,
             base_branch: None,
-            agent: None,
-            scope_path: None,
             extra_args: Vec::new(),
             forwarded_args: Vec::new(),
         }

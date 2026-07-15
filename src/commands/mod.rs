@@ -3,10 +3,6 @@ use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
 use std::process::{Command as StdCommand, Stdio};
 
-mod agent;
-mod agent_exec;
-mod agent_profile;
-mod agent_sandbox;
 mod completion;
 mod hook;
 mod project;
@@ -18,8 +14,6 @@ mod workspace;
 
 use hatch::WorkspaceService;
 
-pub use agent::AgentCommand;
-pub use agent_exec::AgentExecArgs;
 pub use completion::{CarapaceCompleteArgs, CompleteArgs, CompletionsArgs};
 pub use hook::HookCommand;
 pub use project::ProjectCommand;
@@ -54,10 +48,6 @@ pub(crate) enum Command {
         #[command(subcommand)]
         command: RepoCommand,
     },
-    Agent {
-        #[command(subcommand)]
-        command: AgentCommand,
-    },
     #[command(hide = true)]
     Hook {
         #[command(subcommand)]
@@ -71,8 +61,6 @@ pub(crate) enum Command {
     CarapaceComplete(CarapaceCompleteArgs),
     #[command(name = "__complete", hide = true)]
     Complete(CompleteArgs),
-    #[command(name = "__agent-exec", hide = true)]
-    AgentExec(AgentExecArgs),
 }
 
 pub fn run(args: Args) -> anyhow::Result<()> {
@@ -98,11 +86,9 @@ pub fn run(args: Args) -> anyhow::Result<()> {
         Command::Project { command } => project::run(command),
         Command::Task { command } => task::run(command),
         Command::Repo { command } => repo::run(command),
-        Command::Agent { command } => agent::run(command),
         Command::Hook { command } => hook::run(command),
         Command::Update(args) => run_update(args),
         Command::Version => version::run(),
-        Command::AgentExec(args) => agent_exec::run(args),
     }
 }
 

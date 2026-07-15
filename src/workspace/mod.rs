@@ -233,24 +233,6 @@ impl WorkspaceService {
         WorkspaceHookAdapter::new(self.core.clone()).run_workspace_hook(&paths, hook, &args)?;
         Ok(())
     }
-
-    pub fn start_agent_in_workspace(&self, agent: String, args: Vec<String>) -> Result<()> {
-        let paths = self.paths()?;
-        let current_dir = std::env::current_dir()
-            .map_err(|source| crate::Error::Message(format!("failed to read cwd: {source}")))?;
-        let current_dir = camino::Utf8PathBuf::from_path_buf(current_dir).map_err(|path| {
-            crate::Error::Message(format!("cwd is not valid UTF-8: {}", path.display()))
-        })?;
-        let scope = location::resolve_agent_scope(&paths, &current_dir)?;
-        WorkspaceHookAdapter::new(self.core.clone()).run_agent_start(
-            &paths,
-            scope.project_path.as_deref(),
-            agent,
-            &scope.scope_path,
-            args,
-        )?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
