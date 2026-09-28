@@ -27,7 +27,6 @@ fn project_new_mutates_workspace() {
     assert!(!env.path("api/.project").exists());
     assert!(env.path("api/.hatch").exists());
     assert_eq!(env.read("api/AGENTS.md"), "@../AGENTS.md\n");
-    assert_eq!(env.read("api/CLAUDE.md"), "@AGENTS.md\n");
     assert!(
         env.read("api/.hatch/default-repos.txt")
             .contains("owner/repo")

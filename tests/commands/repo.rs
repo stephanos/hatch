@@ -282,15 +282,6 @@ fn repo_new_includes_parent_and_repo_agents_in_override_if_repo_agents_exist() {
         }),
         "@../AGENTS.md\n@AGENTS.md\n"
     );
-    assert_eq!(
-        fs::read_to_string(repo_path.join("CLAUDE.local.md")).unwrap_or_else(|error| {
-            panic!(
-                "failed to read {}: {error}",
-                repo_path.join("CLAUDE.local.md").display()
-            )
-        }),
-        "@AGENTS.override.md\n@CLAUDE.md\n"
-    );
 }
 
 #[test]

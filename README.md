@@ -118,7 +118,6 @@ alias open-task='hatch task open'
 Hatch generates AI agent files inside each repo to automatically include project and workspace prompts. Add this to your `~/.gitignore_global`:
 
 ```gitignore
-CLAUDE.local.md
 AGENTS.override.md
 ```
 

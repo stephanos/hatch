@@ -13,7 +13,6 @@ project_default_repos="$project_path/.hatch/default-repos.txt"
 
 # Write agent instruction forwarding files.
 printf '@../AGENTS.md\n' > "$task_path/AGENTS.md"
-printf '@AGENTS.md\n' > "$task_path/CLAUDE.md"
 
 # Check out one default repo.
 checkout_default_repo() {
