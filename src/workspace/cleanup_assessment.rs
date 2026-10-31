@@ -208,3 +208,113 @@ pub(super) fn is_github_rate_limited_error(error: &Error) -> bool {
         || message.contains("secondary rate limit")
         || message.contains("abuse detection")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use camino::Utf8PathBuf;
+    use std::process::Command;
+
+    fn git(repo: &camino::Utf8Path, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap()
+    }
+
+    fn fixture() -> (
+        tempfile::TempDir,
+        Utf8PathBuf,
+        Utf8PathBuf,
+        RepoCleanupAssessor,
+    ) {
+        let temp = tempfile::tempdir().unwrap();
+        let root = Utf8PathBuf::from_path_buf(temp.path().to_path_buf()).unwrap();
+        let repo = root.join("repo");
+        let remote = root.join("remote.git");
+        git(&root, &["init", "--bare", remote.as_str()]);
+        git(&root, &["init", "--initial-branch", "done", repo.as_str()]);
+        git(
+            &repo,
+            &[
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.com",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "init",
+            ],
+        );
+        git(&repo, &["remote", "add", "origin", remote.as_str()]);
+        git(&repo, &["push", "-u", "origin", "done"]);
+        let store = crate::HatchStore::new(crate::HatchEnvironment::new(Some(root)));
+        let assessor = RepoCleanupAssessor::new(WorkspaceServiceCore::new(store));
+        (temp, repo, remote, assessor)
+    }
+
+    #[test]
+    fn cleanup_skips_remote_branch_deleted_since_last_fetch() {
+        let (_temp, repo, remote, assessor) = fixture();
+        git(&remote, &["update-ref", "-d", "refs/heads/done"]);
+        git(&repo, &["show-ref", "--verify", "refs/remotes/origin/done"]);
+
+        assessor.cleanup_remote_branch_for_repo(&repo).unwrap();
+    }
+
+    #[test]
+    fn cleanup_deletes_existing_remote_branch() {
+        let (_temp, repo, remote, assessor) = fixture();
+
+        assessor.cleanup_remote_branch_for_repo(&repo).unwrap();
+
+        assert!(git(&remote, &["for-each-ref", "refs/heads/done"]).is_empty());
+    }
+
+    #[test]
+    fn cleanup_reports_unreachable_remote() {
+        let (_temp, repo, remote, assessor) = fixture();
+        fs_err::remove_dir_all(remote).unwrap();
+
+        assert!(assessor.cleanup_remote_branch_for_repo(&repo).is_err());
+        assert!(repo.exists());
+    }
+
+    #[test]
+    fn default_delete_hook_handles_stale_remote_tracking_ref() {
+        let (_temp, repo, remote, _assessor) = fixture();
+        git(&remote, &["update-ref", "-d", "refs/heads/done"]);
+        let output = Command::new("sh")
+            .arg(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/templates/hooks/repo_delete.sh"
+            ))
+            .args(["--repo-path", repo.as_str()])
+            .env(
+                "HATCH_HOOK_LIB_DIR",
+                concat!(env!("CARGO_MANIFEST_DIR"), "/templates/lib"),
+            )
+            .output()
+            .unwrap();
+
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            !repo.exists(),
+            "hook left the checkout behind: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}

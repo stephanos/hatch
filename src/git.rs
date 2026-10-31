@@ -71,6 +71,23 @@ impl GitCli {
     }
 
     pub(crate) fn delete_remote_branch(&self, repo_path: &Utf8Path, branch: &str) -> Result<()> {
+        let remote_branch = self.runner.run(
+            "git",
+            &[
+                "-C".to_string(),
+                repo_path.to_string(),
+                "ls-remote".to_string(),
+                "--heads".to_string(),
+                "origin".to_string(),
+                format!("refs/heads/{branch}"),
+            ],
+            None,
+            None,
+        )?;
+        if remote_branch.is_empty() {
+            return Ok(());
+        }
+
         self.runner
             .run(
                 "git",

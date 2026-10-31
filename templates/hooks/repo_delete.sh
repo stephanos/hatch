@@ -23,6 +23,9 @@ fi
 # Delete branch and checkout.
 # Delete remote branch (if present) and remove local repo directory.
 if git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-  git -C "$repo_path" push --delete origin "$branch" || exit 0
+  remote_branch="$(git -C "$repo_path" ls-remote --heads origin "refs/heads/$branch")" || exit 1
+  if [ -n "$remote_branch" ]; then
+    git -C "$repo_path" push --delete origin "$branch" || exit 1
+  fi
 fi
 rm -rf "$repo_path"
