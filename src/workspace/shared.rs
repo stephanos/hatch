@@ -90,8 +90,25 @@ impl TaskDirectoryDeletion {
 
 #[cfg(target_os = "macos")]
 fn remove_task_directory_platform(path: &Utf8Path) -> Result<()> {
-    trash::delete(path.as_std_path())
+    retry_trash_when_finder_busy(|| trash::delete(path.as_std_path()), std::thread::sleep)
         .map_err(|source| Error::Message(format!("failed to move {} to trash: {source}", path)))
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn retry_trash_when_finder_busy(
+    mut delete: impl FnMut() -> std::result::Result<(), trash::Error>,
+    mut wait: impl FnMut(std::time::Duration),
+) -> std::result::Result<(), trash::Error> {
+    let mut result = delete();
+    for delay_ms in [250, 500, 1000] {
+        if !matches!(&result, Err(trash::Error::Os { description, .. }) if description.contains("(-15260)"))
+        {
+            return result;
+        }
+        wait(std::time::Duration::from_millis(delay_ms));
+        result = delete();
+    }
+    result
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -110,6 +127,71 @@ fn remove_task_directory_direct(path: &Utf8Path) -> Result<()> {
 mod tests {
     use super::TaskDirectoryDeletion;
     use tempfile::tempdir;
+
+    fn finder_busy() -> trash::Error {
+        trash::Error::Os {
+            code: 1,
+            description: "The AppleScript exited with error. stderr: Finder got an error: The Finder is busy. (-15260)".to_string(),
+        }
+    }
+
+    #[test]
+    fn retries_busy_finder_until_trash_succeeds() {
+        let mut attempts = 0;
+        let mut waits = Vec::new();
+        let result = super::retry_trash_when_finder_busy(
+            || {
+                attempts += 1;
+                if attempts < 3 {
+                    Err(finder_busy())
+                } else {
+                    Ok(())
+                }
+            },
+            |delay| waits.push(delay.as_millis()),
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(attempts, 3);
+        assert_eq!(waits, vec![250, 500]);
+    }
+
+    #[test]
+    fn stops_retrying_persistently_busy_finder() {
+        let mut attempts = 0;
+        let mut waits = Vec::new();
+        let result = super::retry_trash_when_finder_busy(
+            || {
+                attempts += 1;
+                Err(finder_busy())
+            },
+            |delay| waits.push(delay.as_millis()),
+        );
+
+        assert!(result.unwrap_err().to_string().contains("(-15260)"));
+        assert_eq!(attempts, 4);
+        assert_eq!(waits, vec![250, 500, 1000]);
+    }
+
+    #[test]
+    fn does_not_retry_other_trash_errors() {
+        let mut attempts = 0;
+        let mut waits = Vec::new();
+        let result = super::retry_trash_when_finder_busy(
+            || {
+                attempts += 1;
+                Err(trash::Error::Os {
+                    code: 1,
+                    description: "Not authorized (-1743)".to_string(),
+                })
+            },
+            |delay| waits.push(delay.as_millis()),
+        );
+
+        assert!(result.unwrap_err().to_string().contains("(-1743)"));
+        assert_eq!(attempts, 1);
+        assert!(waits.is_empty());
+    }
 
     #[test]
     fn direct_task_directory_deletion_removes_directory() {
