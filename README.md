@@ -69,7 +69,9 @@ Clean up completed tasks:
 hatch workspace clean
 ```
 
-Hatch lists tasks and preselects ones with closed or merged PRs.
+Hatch lists tasks and marks them with `[x]` when they have no repos or all their repos have merged or closed PRs and no local changes.
+
+Press Tab to toggle a task, Enter to delete the marked tasks, or Esc to cancel. If nothing is marked, Enter deletes the highlighted task.
 
 Once submitted, it removes the selected tasks' files locally and deletes their remote branches (see [hooks](#hooks) below to change this).
 

@@ -83,7 +83,7 @@ pub(crate) fn interactive_cleanup_selection(
         .prompt("clean ")
         .selector_icon(" ")
         .multi_select_icon("[x] ")
-        .header("Select tasks to delete")
+        .header("[x] = selected for deletion\nTab: toggle | Enter: delete marked (or current) | Esc: cancel")
         .pre_select_items(selection_rows.pre_select_items.join("\n"))
         .bind(["tab:toggle".to_string(), "shift-tab:toggle".to_string()].to_vec())
         .build()
@@ -95,10 +95,21 @@ pub(crate) fn interactive_cleanup_selection(
         return Ok(Vec::new());
     }
 
+    Ok(cleanup_selected_candidates(
+        &selection_rows.sorted_candidates,
+        output.selected_items,
+    ))
+}
+
+fn cleanup_selected_candidates(
+    candidates: &[hatch::CleanupCandidateView],
+    selected_items: Vec<skim::item::MatchedItem>,
+) -> Vec<hatch::CleanupCandidate> {
     let mut selected_indices = BTreeSet::new();
-    for item in output.selected_items {
+    for item in selected_items {
         if let Some(candidate_item) = item
             .item
+            .as_ref()
             .as_any()
             .downcast_ref::<CleanupCandidateFuzzyRow>()
         {
@@ -106,14 +117,10 @@ pub(crate) fn interactive_cleanup_selection(
         }
     }
 
-    if selected_indices.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    Ok(selected_indices
+    selected_indices
         .into_iter()
-        .map(|index| selection_rows.sorted_candidates[index].candidate.clone())
-        .collect())
+        .map(|index| candidates[index].candidate.clone())
+        .collect()
 }
 
 #[derive(Debug)]
@@ -231,8 +238,10 @@ pub(crate) fn write_cleanup_human(candidates: &[hatch::CleanupCandidate]) {
 
 #[cfg(test)]
 mod tests {
-    use super::cleanup_selection_rows;
+    use super::{cleanup_selected_candidates, cleanup_selection_rows};
     use camino::Utf8PathBuf;
+    use skim::item::{MatchedItem, RankBuilder};
+    use skim::prelude::*;
 
     fn candidate(
         project: &str,
@@ -252,6 +261,41 @@ mod tests {
             status: status.to_string(),
             default_selected: selected,
         }
+    }
+
+    #[test]
+    fn selected_rows_are_returned_for_cleanup() {
+        let rows = cleanup_selection_rows(&[
+            candidate("web", "keep", &["web"], "OPEN", false),
+            candidate("api", "done", &["api"], "MERGED", true),
+            candidate("api", "empty", &[], "No repos", true),
+        ]);
+        let selected_items = rows
+            .items
+            .into_iter()
+            .take(2)
+            .map(|row| {
+                MatchedItem::new(
+                    Arc::new(row),
+                    Rank::default(),
+                    None,
+                    &RankBuilder::default(),
+                )
+            })
+            .collect();
+
+        let selected = cleanup_selected_candidates(&rows.sorted_candidates, selected_items);
+
+        assert_eq!(
+            selected
+                .into_iter()
+                .map(|candidate| candidate.path)
+                .collect::<Vec<_>>(),
+            vec![
+                Utf8PathBuf::from("api/done"),
+                Utf8PathBuf::from("api/empty")
+            ]
+        );
     }
 
     #[test]
