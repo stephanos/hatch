@@ -28,9 +28,11 @@ arch="$(uname -m)"
 case "$arch" in
   x86_64 | amd64)
     arch="x86_64"
+    arch_pattern="x86_64|amd64"
     ;;
   arm64 | aarch64)
     arch="arm64"
+    arch_pattern="arm64|aarch64"
     ;;
   *)
     echo "unsupported architecture: $arch" >&2
@@ -42,16 +44,17 @@ if [ ! -f "$tmp_dir/release.json" ]; then
   curl -fsSL "https://api.github.com/repos/$repo/releases/latest" -o "$tmp_dir/release.json"
 fi
 
-download_url="$(grep -o '"browser_download_url": "[^"]*"' "$tmp_dir/release.json" \
-  | sed 's/^.*"//;s/"$//' \
+release_urls="$(grep -o '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]*"' "$tmp_dir/release.json" \
+  | sed 's/^[^:]*:[[:space:]]*"//;s/"$//')"
+download_url="$(printf '%s\n' "$release_urls" \
   | grep -Ei "$os_pattern" \
-  | grep -i "$arch" \
+  | grep -Ei "$arch_pattern" \
   | head -n 1)"
 
 if [ -z "$download_url" ]; then
   echo "could not find matching release artifact for $os/$arch" >&2
   echo "available downloads:" >&2
-  grep -o '"browser_download_url": "[^"]*"' "$tmp_dir/release.json" | sed 's/^.*"//;s/"$//' >&2
+  printf '%s\n' "$release_urls" >&2
   exit 1
 fi
 
